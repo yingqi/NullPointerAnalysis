@@ -1,0 +1,251 @@
+package dispatcher;
+
+import java.util.ArrayList;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import bean.MethodPlus;
+import bean.UnitPlus;
+import soot.Body;
+import soot.SootClass;
+import soot.SootMethod;
+import soot.Type;
+import soot.Unit;
+import soot.toolkits.graph.ExceptionalUnitGraph;
+import soot.toolkits.graph.UnitGraph;
+
+/**
+ * this class is to create a control flow graph which contains all methods and
+ * the connections between methods are methods calls.
+ * Warning: Still not know how to decide which is a caller.
+ * 
+ * @author Yingqi
+ * 
+ */
+public class CreateCompleteCFG {
+
+	private Map<UnitPlus, List<UnitPlus>> completeCFG;
+	private Map<UnitPlus, List<Unit>> CFG;
+	private Set<UnitPlus> UnitDirectory;
+	private Map<MethodPlus, UnitGraph> methodToUnitGraph;
+	private List<MethodPlus> Methods;
+	// private Method[] methods;
+	private String classNameString;
+	private SootClass sootclass;
+
+	/**
+	 * constructor which initialize all necessary fields.
+	 * @param sootclass representation of class in soot
+	 * @param classNameString class name
+	 */
+	public CreateCompleteCFG(SootClass sootclass, String classNameString) {
+		this.classNameString = classNameString;
+		this.sootclass = sootclass;
+		completeCFG = new HashMap<>();
+		CFG = new HashMap<>();
+		UnitDirectory = new HashSet<>();
+		methodToUnitGraph = new HashMap<>();
+		Methods = new ArrayList<>();
+	}
+
+	/**
+	 * create a complete control flow graph.
+	 * @return
+	 */
+	public Map<UnitPlus, List<UnitPlus>> createCFG() {
+		// try {
+		// Class<?> classType = Class.forName(classNameString);
+		// methods = classType.getDeclaredMethods();
+		// for (Method method : methods) {
+		// Class<?>[] parameterTypes = method.getParameterTypes();
+		// List<Class<?>> parameterList = new ArrayList<>();
+		// for(Class<?> parameterType:parameterTypes){
+		// parameterList.add(parameterType);
+		// System.out.println(parameterType);
+		// }
+		// SootMethod sootmethod = sootclass.getMethod(method.getName(),
+		// parameterList);
+		// Body body = sootmethod.retrieveActiveBody();
+		// UnitGraph unitGraph = new ExceptionalUnitGraph(body);
+		// methodToUnitGraph.put(methodName, unitGraph);
+
+		List<SootMethod> sootMethods = sootclass.getMethods();
+		for (SootMethod sootMethod : sootMethods) {
+			Body body = sootMethod.retrieveActiveBody();
+			UnitGraph unitGraph = new ExceptionalUnitGraph(body);
+			List<Type> parameterList = sootMethod.getParameterTypes();
+			MethodPlus Method = new MethodPlus(sootMethod.getName(), classNameString,
+					parameterList);
+			Methods.add(Method);
+			methodToUnitGraph.put(Method, unitGraph);
+			this.createCFGsForMethod(unitGraph, Method);
+		}
+
+		// }
+		// } catch (ClassNotFoundException e) {
+		// e.printStackTrace();
+		// }
+		this.createCompleteCFG();
+		this.combineAllCFGs();
+
+		return completeCFG;
+	}
+
+	private void createCFGsForMethod(UnitGraph unitGraph, MethodPlus Method) {
+
+		Iterator<Unit> unitIterator = unitGraph.iterator();
+		int index = UnitDirectory.size();
+		while (unitIterator.hasNext()) {
+			Unit unit = unitIterator.next();
+			if (unit.toString().contains(classNameString)
+					&& unit.toString().contains("invoke")
+					&& !unit.toString().contains("goto")) {
+				UnitPlus NodeA = new UnitPlus(index, "a", unit, Method);
+				UnitPlus NodeB = new UnitPlus(index, "b", unit, Method);
+				index++;
+				UnitDirectory.add(NodeA);
+				UnitDirectory.add(NodeB);
+				List<Unit> preds = new ArrayList<>();
+				preds.addAll(unitGraph.getPredsOf(unit));
+				CFG.put(NodeA, preds);
+				CFG.put(NodeB, new ArrayList<Unit>());
+			} else {
+				UnitPlus Node = new UnitPlus(index, unit, Method);
+				UnitDirectory.add(Node);
+				index++;
+				List<Unit> preds = new ArrayList<>();
+				preds.addAll(unitGraph.getPredsOf(unit));
+				CFG.put(Node, preds);
+			}
+
+		}
+	}
+
+	private void createCompleteCFG() {
+		Set<UnitPlus> keys = CFG.keySet();
+		for (UnitPlus key : keys) {
+			List<Unit> unitPreds = new ArrayList<>();
+			List<UnitPlus> unitPlusPreds = new ArrayList<>();
+			unitPreds = CFG.get(key);
+			for (Unit unitPred : unitPreds) {
+				for (UnitPlus unitPlus : UnitDirectory) {
+					if (unitPlus.getUnit().equals(unitPred)) {
+						if (!unitPlus.getAttribute().equals("a")) {
+							unitPlusPreds.add(unitPlus);
+						}
+					}
+				}
+			}
+			completeCFG.put(key, unitPlusPreds);
+		}
+	}
+
+	private void combineAllCFGs() {
+		for (UnitPlus ud : UnitDirectory) {
+			if (ud.getAttribute().equals("a")) {
+				for (MethodPlus method : Methods) {
+					if (ud.getUnit().toString()
+							.contains(method.getMethodName())) {
+						UnitGraph unitGraph = methodToUnitGraph.get(method);
+						List<Unit> heads = unitGraph.getHeads();
+						for (Unit head : heads) {
+							for (UnitPlus headUnitPlus : UnitDirectory) {
+								if (headUnitPlus.getUnit().equals(head)
+										&& (!headUnitPlus.getAttribute()
+												.equals("b"))) {
+									List<UnitPlus> preds = completeCFG
+											.get(headUnitPlus);
+									preds.add(ud);
+								}
+							}
+						}
+					}
+				}
+			} else if (ud.getAttribute().equals("b")) {
+				for (MethodPlus method : Methods) {
+					if (ud.getUnit().toString()
+							.contains(method.getMethodName())) {
+						UnitGraph unitGraph = methodToUnitGraph.get(method);
+						List<Unit> tails = unitGraph.getTails();
+						List<UnitPlus> preds = completeCFG.get(ud);
+						for (Unit tail : tails) {
+							for (UnitPlus tailUnitPlus : UnitDirectory) {
+								if (tailUnitPlus.getUnit().equals(tail)
+										&& (!tailUnitPlus.getAttribute()
+												.equals("a"))) {
+									preds.add(tailUnitPlus);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * get the unit directory
+	 * @return unit directory
+	 */
+	public Set<UnitPlus> getUnitDirectory() {
+		return UnitDirectory;
+	}
+
+	/**
+	 * get the map of methods to unit graph
+	 * @return map of methods to unit graph
+	 */
+	public Map<MethodPlus, UnitGraph> getMethodToUnitGraph() {
+		return methodToUnitGraph;
+	}
+
+}
+
+// System.out.println("Before Add");
+// System.out.println("b:");
+// for(Node Node:UnitDirectory){
+// if(Node.getNumber()==7&&Node.getAttribute().equals("b")){
+// List<Unit> preds = completeCFG.get(Node);
+// for(Unit unit:preds){
+// System.out.println(unit.toString());
+// }
+// }
+// }
+//
+// System.out.println("a:");
+// for(Node Node:UnitDirectory){
+// if(Node.getNumber()==38){
+// List<Unit> preds = completeCFG.get(Node);
+// for(Unit unit:preds){
+// System.out.println(unit.toString());
+// }
+// }
+// }
+//
+
+// System.out.println("After Add");
+// System.out.println("b:");
+// for(Node Node:UnitDirectory){
+// if(Node.getNumber()==7&&Node.getAttribute().equals("b")){
+// List<Unit> preds = completeCFG.get(Node);
+// for(Unit unit:preds){
+// System.out.println(unit.toString());
+// }
+// }
+// }
+//
+// System.out.println("a:");
+// for(Node Node:UnitDirectory){
+// if(Node.getNumber()==38){
+// List<Unit> preds = completeCFG.get(Node);
+// for(Unit unit:preds){
+// System.out.println(unit.toString());
+// }
+// }
+// }
