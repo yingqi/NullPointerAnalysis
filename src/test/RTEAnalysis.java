@@ -39,6 +39,11 @@ public class RTEAnalysis {
 		this.stackTrace = stackTrace;
 		this.completeCFG = completeCFG.createCFG();
 		this.methodToUnitGraph = completeCFG.getMethodToUnitGraph();
+		dispatcher = new DispatcherFactory(this.completeCFG, this.stackTrace, methodToUnitGraph);
+	}
+	
+	public Dispatcher getDispatcher(){
+		return dispatcher;
 	}
 	
 	

@@ -8,6 +8,8 @@ public class UnitPlus {
 	private String attributeString;
 	private Unit unit;
 	private MethodPlus Method;
+//	private State state;
+	private boolean isVisited;
 	
 	/**
 	 * constructor for units which is not a caller.
@@ -20,6 +22,7 @@ public class UnitPlus {
 		this.unit = unit;
 		attributeString="null";
 		this.Method = Method;
+		this.isVisited = false;
 	}
 	
 	/**
@@ -34,6 +37,7 @@ public class UnitPlus {
 		this.attributeString = attributeString;
 		this.unit = unit;
 		this.Method = Method;
+		this.isVisited = false;
 	}
 
 	/**
@@ -100,4 +104,31 @@ public class UnitPlus {
 		return Method;
 	}
 
+//	public State getState() {
+//		return state;
+//	}
+//
+//	public void setState(State state) {
+//		this.state = state;
+//	}
+
+	public boolean isVisited() {
+		return isVisited;
+	}
+
+	public void setVisited(boolean isVisited) {
+		this.isVisited = isVisited;
+	}
+
+//	public State transform(State nextState) {
+//		//TO DO 
+//		State newState = null;
+//		return newState;
+//	}
+//	
+	public boolean isPredicate()
+	{
+		boolean isPredicate = false;
+		return isPredicate;
+	}
 }
