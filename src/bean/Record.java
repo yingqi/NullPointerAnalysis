@@ -20,6 +20,6 @@ public class Record {
 
 	public State getOutgoingState() {
 		// TODO Auto-generated method stub
-		return null;
+		return outgoingState;
 	}
 }

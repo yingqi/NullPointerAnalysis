@@ -16,12 +16,11 @@ public class State
 		this.variable=variable;
 		this.thisStatement=thisStatement;
 	}
-	public State map(UnitPlus s)
-	{
-		//TO DO
-		State newState = null;
-		return newState;
-	}
+//	public State map(UnitPlus s)
+//	{
+//		//TO DO
+//		return null;
+//	}
 	private String variable;//root predicate:<variable=null>
 	private String thisStatement;//<thisStatement!=null>
 	public static final State EMPTY= new State(null,null);
