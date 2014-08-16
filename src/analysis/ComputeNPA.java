@@ -2,10 +2,7 @@ package analysis;
 
 import java.util.*;
 
-<<<<<<< HEAD
-=======
-import soot.Unit;
->>>>>>> origin/master
+
 import test.RTEAnalysis;
 import bean.Element;
 import bean.MethodPlus;
@@ -37,11 +34,8 @@ public class ComputeNPA {
 //		
 //	}
 	
-<<<<<<< HEAD
-	public void  analyzeMethod(UnitPlus unitPlus,State state)
-=======
+
 	public void analyzeMethod(UnitPlus unitPlus,State state)
->>>>>>> origin/master
 	{
 		Stack<Element> worklist=new Stack<Element>();
 		Element initializeElement=new Element(unitPlus,state);
@@ -79,10 +73,7 @@ public class ComputeNPA {
 						}
 						//the outgoing state from the first node of the MethodPlus was returned by analyzeMethodPlus
 						CS.pop();
-<<<<<<< HEAD
 						outgoingState = map(presentState, unitPlus);
-=======
->>>>>>> origin/master
 						summary.setInformation(methodPlus,presentState,outgoingState);
 					}
 				}
