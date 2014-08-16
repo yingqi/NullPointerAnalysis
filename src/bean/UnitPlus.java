@@ -100,7 +100,7 @@ public class UnitPlus {
 	 * get the method
 	 * @return method
 	 */
-	public MethodPlus getMethod(){
+	public MethodPlus getMethodPlus(){
 		return Method;
 	}
 

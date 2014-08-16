@@ -2,11 +2,12 @@ package analysis;
 
 import java.util.ArrayList;
 
+import java.util.List;
+
 import bean.Element;
 import bean.MethodPlus;
 import bean.Record;
 import bean.State;
-import bean.UnitPlus;
 
 /**
  * help to map the incoming state to outgoing state
@@ -23,7 +24,7 @@ public class Summary {
 	public State getInformation(Element element)
 	{
 		State incomingState=element.getState();
-		MethodPlus methodPlus = element.getUnitPlus().getMethod();
+		MethodPlus methodPlus = element.getUnitPlus().getMethodPlus();
 		for(Record record:information)
 		{
 			if(record.compareMethod(methodPlus)&&record.compareIncomingState(incomingState))
@@ -38,5 +39,5 @@ public class Summary {
 		information.add(new Record(methodPlus,incomingState,outgoingState));
 	}
 	
-	private ArrayList<Record> information;
+	private List<Record> information;
 }

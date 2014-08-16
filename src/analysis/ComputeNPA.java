@@ -3,6 +3,7 @@ package analysis;
 import java.util.*;
 
 import soot.Unit;
+import test.RTEAnalysis;
 import bean.Element;
 import bean.MethodPlus;
 import bean.State;
@@ -23,7 +24,8 @@ public class ComputeNPA {
 	public ComputeNPA()
 	{
 		NPA=new ArrayList<>();
-		dispatcher = RTE
+		RTEAnalysis rteAnalysis = new RTEAnalysis();
+		dispatcher = rteAnalysis.getDispatcher();
 //		i=0;
 		
 	}
@@ -33,7 +35,7 @@ public class ComputeNPA {
 //		
 //	}
 	
-	public State analyzeMethod(UnitPlus unitPlus,State state)
+	public void analyzeMethod(UnitPlus unitPlus,State state)
 	{
 		Stack<Element> worklist=new Stack<Element>();
 		Element initializeElement=new Element(unitPlus,state);
@@ -42,53 +44,55 @@ public class ComputeNPA {
 		{
 			Element presentElement=worklist.pop();//traverse the present statement
 			presentElement.setVisited();//mark the statement
-			ArrayList<UnitPlus> preds=(ArrayList<UnitPlus>) Dispatcher.getPredecessors(presentElement.getUnitPlus());
+			List<UnitPlus> preds=dispatcher.getPredecessors(presentElement.getUnitPlus());
 			for(UnitPlus up:preds)
 			{
 				State presentState=presentElement.getState();
 				Element predElement=new Element(up,presentState);
-				if(!up.isCall()&&!sp.isEntry())
+				if(dispatcher.isCall(up)&&dispatcher.isEntry(up))
 				{
-					if(sp.isTransform())
-					{
+//					if(up.isTransform())
+//					{
 						predElement.transform();//how to transform???????
 						if(predElement.isPredicate())
 						{
-							NPA[i++]=sp;
+							NPA.add(up);
 						}
-					}
+//					}
 				}
-				else if(sp.isCall())
+				else if(dispatcher.isCall(up))
 				{
 					State outgoingState=summary.getInformation(predElement);
-					if(presentState=State.EMPTY)
+					if(presentState==null)
 					{
-						MethodPlus MethodPlus=sp.getMethodPlus();
-						CS.push(MethodPlus);
-						outgoingState=map(presentState,MethodPlus.getExitNode());//map transform the incoming state to ougoing state
-						outgoingState=analyzeMethodPlus(MethodPlus.getExitNode(),outgoingState);
+						MethodPlus methodPlus=up.getMethodPlus();
+						CS.push(methodPlus);
+						for(UnitPlus exitnode:dispatcher.getExitUnitPlus(methodPlus)){
+							outgoingState=map(presentState,exitnode);//map transform the incoming state to ougoing state
+							analyzeMethod(exitnode,outgoingState);
+						}
 						//the outgoing state from the first node of the MethodPlus was returned by analyzeMethodPlus
 						CS.pop();
+						summary.setInformation(methodPlus,presentState,outgoingState);
 					}
-					summary.setInformation(MethodPlus,presentState,outgoingState);
 				}
 				if(!predElement.isVisited())	worklist.push(predElement);
-				if(sp.isEntry())	return presentState;//whether using return would result in a bug?????
+//				if(up.isEntry())	return presentState;//whether using return would result in a bug?????
 			}
 		}
 		if(CS.size()==0)
 		{
-			Statement[] cs=D.getCallSites();
-			for(Statement sc:cs)
+			List<UnitPlus> callSites=dispatcher.getAllCallSites(unitPlus);
+			for(UnitPlus callSite:callSites)
 			{
-				State outgoingState=map(sc,presentState);
-				analyzeMethodPlus(sc,outgoingState);
+				State outgoingState=map(state, callSite);
+				analyzeMethod(callSite,outgoingState);
 				
 			}
 		}
 	}
 	
-	private State map(State incomingState,Statement statement)//how to map??????
+	private State map(State incomingState,UnitPlus unitPlus)//how to map??????
 	{
 		return incomingState;
 	}

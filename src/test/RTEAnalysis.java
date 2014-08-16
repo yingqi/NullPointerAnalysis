@@ -23,6 +23,8 @@ public class RTEAnalysis {
 	private Map<MethodPlus, UnitGraph> methodToUnitGraph;
 	private Dispatcher dispatcher;
 
+	public RTEAnalysis(){
+	}	//TO DO 
 	public RTEAnalysis(StackTraceElement[] stackTrace) {
 		sootClassPath=System.getProperty("user.dir")+"\\bin";
 		Options.v().set_allow_phantom_refs(true);
