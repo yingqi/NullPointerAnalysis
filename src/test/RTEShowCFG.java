@@ -38,7 +38,7 @@ public class RTEShowCFG {
 			if (node.getAttribute().equals("null")) {
 				//Show the units
 				System.out.println("unit" + '\t' + node.getNumber() + '\t'
-						+ node.getMethod().toString() + '\t' + '\t'
+						+ node.getMethodPlus().toString() + '\t' + '\t'
 						+ node.getUnit().toString());
 //				List<ValueBox> vl= node.getUnit().getUseBoxes();
 //				for(ValueBox vb:vl){
@@ -50,11 +50,11 @@ public class RTEShowCFG {
 				for(UnitPlus pred:preds){
 					if(pred.getAttribute().equals("null")){
 						System.out.println("pred" + '\t' + pred.getNumber() + '\t'
-								+ pred.getMethod().toString() + '\t' + '\t'
+								+ pred.getMethodPlus().toString() + '\t' + '\t'
 								+ pred.getUnit().toString());
 					}else{
 						System.out.println("pred" + '\t' + pred.getNumber()+ pred.getAttribute() + '\t'
-								+ pred.getMethod().toString() + '\t' + '\t'
+								+ pred.getMethodPlus().toString() + '\t' + '\t'
 								+ pred.getUnit().toString());
 					}
 
@@ -63,7 +63,7 @@ public class RTEShowCFG {
 			} else {
 				//show the units
 				System.out.println("unit" + '\t' + node.getNumber() + node.getAttribute()
-						+ '\t' + node.getMethod().toString() + '\t' +  '\t'
+						+ '\t' + node.getMethodPlus().toString() + '\t' +  '\t'
 						+ node.getUnit().toString());
 				
 				//show the preds
@@ -71,11 +71,11 @@ public class RTEShowCFG {
 				for(UnitPlus pred:preds){
 					if(pred.getAttribute().equals("null")){
 						System.out.println("pred" + '\t' + pred.getNumber() + '\t'
-								+ pred.getMethod().toString() + '\t' + '\t'
+								+ pred.getMethodPlus().toString() + '\t' + '\t'
 								+ pred.getUnit().toString());
 					}else{
 						System.out.println("pred" + '\t' + pred.getNumber()+ pred.getAttribute() + '\t'
-								+ pred.getMethod().toString() + '\t' +  '\t'
+								+ pred.getMethodPlus().toString() + '\t' +  '\t'
 								+ pred.getUnit().toString());
 					}
 

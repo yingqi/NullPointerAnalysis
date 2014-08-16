@@ -75,7 +75,7 @@ public class DispatcherFactory implements Dispatcher {
 
 	@Override
 	public MethodPlus getMethod(UnitPlus unitPlus) {
-		return unitPlus.getMethod();
+		return unitPlus.getMethodPlus();
 	}
 
 	@Override
