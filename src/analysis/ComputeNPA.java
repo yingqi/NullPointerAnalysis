@@ -35,7 +35,7 @@ public class ComputeNPA {
 //	}
 	
 
-	public void analyzeMethod(UnitPlus unitPlus,State state)
+	public State analyzeMethod(UnitPlus unitPlus,State state)
 	{
 		Stack<Element> worklist=new Stack<Element>();
 		Element initializeElement=new Element(unitPlus,state);
@@ -69,7 +69,7 @@ public class ComputeNPA {
 						CS.push(methodPlus);
 						for(UnitPlus exitnode:dispatcher.getExitUnitPlus(methodPlus)){
 							outgoingState=map(presentState,exitnode);//map transform the incoming state to ougoing state
-							analyzeMethod(exitnode,outgoingState);
+							outgoingState = analyzeMethod(exitnode,outgoingState);
 						}
 						//the outgoing state from the first node of the MethodPlus was returned by analyzeMethodPlus
 						CS.pop();
@@ -78,7 +78,7 @@ public class ComputeNPA {
 					}
 				}
 				if(!predElement.isVisited())	worklist.push(predElement);
-//				if(up.isEntry())	return presentState;//whether using return would result in a bug?????
+//				if(dispatcher.isEntry(unitPlus))	return state;//whether using return would result in a bug?????
 			}
 		}
 		if(CS.size()==0)
@@ -91,6 +91,7 @@ public class ComputeNPA {
 				
 			}
 		}
+		return state;////whether using return would result in a bug?????
 	}
 	
 	private State map(State incomingState,UnitPlus unitPlus)//how to map??????

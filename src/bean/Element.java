@@ -23,7 +23,7 @@ public class Element
 	{
 		return state;
 	}
-	public boolean isVisited()
+	public boolean isVisited()//TO BE revised
 	{
 		return unitPlus.isVisited();
 	}
