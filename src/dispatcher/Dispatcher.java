@@ -5,6 +5,9 @@ import java.util.List;
 
 
 
+
+
+import java_cup.internal_error;
 import bean.MethodPlus;
 import bean.UnitPlus;
 import soot.Value;
@@ -26,13 +29,13 @@ public interface Dispatcher {
 
 	/**
 	 * gets the call site based on the stack trace
-	 * Cannot distinguish the call overload
 	 * @param unit
 	 * @param stackTrace
 	 * @return
+	 * @throws ClassNotFoundException 
 	 */
 	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
-			StackTraceElement stackTrace);
+			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException;
 
 	/**
 	 * gets all the call sites

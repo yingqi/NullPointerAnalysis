@@ -1,7 +1,6 @@
 package dispatcher;
 
 import java.util.ArrayList;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,13 +15,16 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
+import soot.jimple.internal.JInvokeStmt;
 import soot.toolkits.graph.ExceptionalUnitGraph;
+import soot.toolkits.graph.ExceptionalUnitGraphPlus;
 import soot.toolkits.graph.UnitGraph;
+import soot.toolkits.graph.UnitGraphPlus;
 
 /**
  * this class is to create a control flow graph which contains all methods and
- * the connections between methods are methods calls.
- * Warning: Still not know how to decide which is a caller.
+ * the connections between methods are methods calls. Warning: Still not know
+ * how to decide which is a caller.
  * 
  * @author Yingqi
  * 
@@ -32,7 +34,7 @@ public class CreateCompleteCFG {
 	private Map<UnitPlus, List<UnitPlus>> completeCFG;
 	private Map<UnitPlus, List<Unit>> CFG;
 	private Set<UnitPlus> UnitDirectory;
-	private Map<MethodPlus, UnitGraph> methodToUnitGraph;
+	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
 	private List<MethodPlus> Methods;
 	// private Method[] methods;
 	private String classNameString;
@@ -40,8 +42,11 @@ public class CreateCompleteCFG {
 
 	/**
 	 * constructor which initialize all necessary fields.
-	 * @param sootclass representation of class in soot
-	 * @param classNameString class name
+	 * 
+	 * @param sootclass
+	 *            representation of class in soot
+	 * @param classNameString
+	 *            class name
 	 */
 	public CreateCompleteCFG(SootClass sootclass, String classNameString) {
 		this.classNameString = classNameString;
@@ -55,6 +60,7 @@ public class CreateCompleteCFG {
 
 	/**
 	 * create a complete control flow graph.
+	 * 
 	 * @return
 	 */
 	public Map<UnitPlus, List<UnitPlus>> createCFG() {
@@ -77,10 +83,10 @@ public class CreateCompleteCFG {
 		List<SootMethod> sootMethods = sootclass.getMethods();
 		for (SootMethod sootMethod : sootMethods) {
 			Body body = sootMethod.retrieveActiveBody();
-			UnitGraph unitGraph = new ExceptionalUnitGraph(body);
+			UnitGraphPlus unitGraph = new ExceptionalUnitGraphPlus(body);
 			List<Type> parameterList = sootMethod.getParameterTypes();
-			MethodPlus Method = new MethodPlus(sootMethod.getName(), classNameString,
-					parameterList);
+			MethodPlus Method = new MethodPlus(sootMethod.getName(),
+					classNameString, parameterList);
 			Methods.add(Method);
 			methodToUnitGraph.put(Method, unitGraph);
 			this.createCFGsForMethod(unitGraph, Method);
@@ -96,15 +102,13 @@ public class CreateCompleteCFG {
 		return completeCFG;
 	}
 
-	private void createCFGsForMethod(UnitGraph unitGraph, MethodPlus Method) {
+	private void createCFGsForMethod(UnitGraphPlus unitGraph, MethodPlus Method) {
 
 		Iterator<Unit> unitIterator = unitGraph.iterator();
 		int index = UnitDirectory.size();
 		while (unitIterator.hasNext()) {
 			Unit unit = unitIterator.next();
-			if (unit.toString().contains(classNameString)
-					&& unit.toString().contains("invoke")
-					&& !unit.toString().contains("goto")) {
+			if (unit instanceof JInvokeStmt) {
 				UnitPlus NodeA = new UnitPlus(index, "a", unit, Method);
 				UnitPlus NodeB = new UnitPlus(index, "b", unit, Method);
 				index++;
@@ -151,17 +155,15 @@ public class CreateCompleteCFG {
 				for (MethodPlus method : Methods) {
 					if (ud.getUnit().toString()
 							.contains(method.getMethodName())) {
-						UnitGraph unitGraph = methodToUnitGraph.get(method);
-						List<Unit> heads = unitGraph.getHeads();
-						for (Unit head : heads) {
-							for (UnitPlus headUnitPlus : UnitDirectory) {
-								if (headUnitPlus.getUnit().equals(head)
-										&& (!headUnitPlus.getAttribute()
-												.equals("b"))) {
-									List<UnitPlus> preds = completeCFG
-											.get(headUnitPlus);
-									preds.add(ud);
-								}
+						UnitGraphPlus unitGraph = methodToUnitGraph.get(method);
+						Unit head = unitGraph.getHead();
+						for (UnitPlus headUnitPlus : UnitDirectory) {
+							if (headUnitPlus.getUnit().equals(head)
+									&& (!headUnitPlus.getAttribute()
+											.equals("b"))) {
+								List<UnitPlus> preds = completeCFG
+										.get(headUnitPlus);
+								preds.add(ud);
 							}
 						}
 					}
@@ -170,16 +172,14 @@ public class CreateCompleteCFG {
 				for (MethodPlus method : Methods) {
 					if (ud.getUnit().toString()
 							.contains(method.getMethodName())) {
-						UnitGraph unitGraph = methodToUnitGraph.get(method);
-						List<Unit> tails = unitGraph.getTails();
+						UnitGraphPlus unitGraph = methodToUnitGraph.get(method);
 						List<UnitPlus> preds = completeCFG.get(ud);
-						for (Unit tail : tails) {
-							for (UnitPlus tailUnitPlus : UnitDirectory) {
-								if (tailUnitPlus.getUnit().equals(tail)
-										&& (!tailUnitPlus.getAttribute()
-												.equals("a"))) {
-									preds.add(tailUnitPlus);
-								}
+						Unit tail = unitGraph.getTail();
+						for (UnitPlus tailUnitPlus : UnitDirectory) {
+							if (tailUnitPlus.getUnit().equals(tail)
+									&& (!tailUnitPlus.getAttribute()
+											.equals("a"))) {
+								preds.add(tailUnitPlus);
 							}
 						}
 					}
@@ -191,6 +191,7 @@ public class CreateCompleteCFG {
 
 	/**
 	 * get the unit directory
+	 * 
 	 * @return unit directory
 	 */
 	public Set<UnitPlus> getUnitDirectory() {
@@ -199,53 +200,12 @@ public class CreateCompleteCFG {
 
 	/**
 	 * get the map of methods to unit graph
+	 * 
 	 * @return map of methods to unit graph
 	 */
-	public Map<MethodPlus, UnitGraph> getMethodToUnitGraph() {
+	public Map<MethodPlus, UnitGraphPlus> getMethodToUnitGraph() {
 		return methodToUnitGraph;
 	}
 
 }
 
-// System.out.println("Before Add");
-// System.out.println("b:");
-// for(Node Node:UnitDirectory){
-// if(Node.getNumber()==7&&Node.getAttribute().equals("b")){
-// List<Unit> preds = completeCFG.get(Node);
-// for(Unit unit:preds){
-// System.out.println(unit.toString());
-// }
-// }
-// }
-//
-// System.out.println("a:");
-// for(Node Node:UnitDirectory){
-// if(Node.getNumber()==38){
-// List<Unit> preds = completeCFG.get(Node);
-// for(Unit unit:preds){
-// System.out.println(unit.toString());
-// }
-// }
-// }
-//
-
-// System.out.println("After Add");
-// System.out.println("b:");
-// for(Node Node:UnitDirectory){
-// if(Node.getNumber()==7&&Node.getAttribute().equals("b")){
-// List<Unit> preds = completeCFG.get(Node);
-// for(Unit unit:preds){
-// System.out.println(unit.toString());
-// }
-// }
-// }
-//
-// System.out.println("a:");
-// for(Node Node:UnitDirectory){
-// if(Node.getNumber()==38){
-// List<Unit> preds = completeCFG.get(Node);
-// for(Unit unit:preds){
-// System.out.println(unit.toString());
-// }
-// }
-// }

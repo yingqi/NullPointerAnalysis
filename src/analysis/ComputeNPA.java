@@ -3,7 +3,7 @@ package analysis;
 import java.util.*;
 
 
-import test.RTEAnalysis;
+import test.Analysis;
 import bean.Element;
 import bean.MethodPlus;
 import bean.State;
@@ -23,7 +23,7 @@ public class ComputeNPA {
 	public ComputeNPA()
 	{
 		NPA=new ArrayList<>();
-		RTEAnalysis rteAnalysis = new RTEAnalysis();
+		Analysis rteAnalysis = new Analysis();
 		dispatcher = rteAnalysis.getDispatcher();
 //		i=0;
 		
@@ -35,7 +35,7 @@ public class ComputeNPA {
 //	}
 	
 
-	public State analyzeMethod(UnitPlus unitPlus,State state)
+	public void analyzeMethod(UnitPlus unitPlus,State state)
 	{
 		Stack<Element> worklist=new Stack<Element>();
 		Element initializeElement=new Element(unitPlus,state);
@@ -69,7 +69,7 @@ public class ComputeNPA {
 						CS.push(methodPlus);
 						for(UnitPlus exitnode:dispatcher.getExitUnitPlus(methodPlus)){
 							outgoingState=map(presentState,exitnode);//map transform the incoming state to ougoing state
-							outgoingState = analyzeMethod(exitnode,outgoingState);
+							analyzeMethod(exitnode,outgoingState);
 						}
 						//the outgoing state from the first node of the MethodPlus was returned by analyzeMethodPlus
 						CS.pop();
@@ -91,7 +91,7 @@ public class ComputeNPA {
 				
 			}
 		}
-		return state;////whether using return would result in a bug?????
+		//return state;//whether using return would result in a bug?????
 	}
 	
 	private State map(State incomingState,UnitPlus unitPlus)//how to map??????

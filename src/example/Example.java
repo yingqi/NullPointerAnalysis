@@ -50,9 +50,14 @@ public class Example {
 		}
 		string1.charAt(0);
 	}
+	
+	public int method5(){
+		int i =2;
+		return i+1;
+	}
 
 	public void method4() {
-
 		method3();
+		int i = method5();
 	}
 }

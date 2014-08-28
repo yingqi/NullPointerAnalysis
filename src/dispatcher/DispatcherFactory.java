@@ -7,11 +7,11 @@ import java.util.Set;
 
 import bean.MethodPlus;
 import bean.UnitPlus;
-
 import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
 import soot.toolkits.graph.UnitGraph;
+import soot.toolkits.graph.UnitGraphPlus;
 
 /**
  * class which implements the interface Dispathcer.
@@ -24,9 +24,9 @@ public class DispatcherFactory implements Dispatcher {
 	private Map<UnitPlus, List<UnitPlus>> completeCFG;
 	private StackTraceElement[] stackTrace;
 	private int indexOfStackTrace;
-	private Map<MethodPlus, UnitGraph> methodToUnitGraph;
+	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
 	
-	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,StackTraceElement[] stackTrace, Map<MethodPlus, UnitGraph> methodToUnitGraph){
+	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,StackTraceElement[] stackTrace, Map<MethodPlus, UnitGraphPlus> methodToUnitGraph){
 		this.completeCFG = completeCFG;
 		this.stackTrace = stackTrace;
 		indexOfStackTrace = 0;
@@ -47,10 +47,22 @@ public class DispatcherFactory implements Dispatcher {
 
 	@Override
 	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
-			StackTraceElement stackTraceElement) {
+			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException {
+		UnitPlus callSite = null;
+		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
 		String methodName = stackTraceElement.getMethodName();
-		
-		return null;
+		String className = stackTraceElement.getClassName();
+		String fileName = stackTraceElement.getFileName();
+		int lineNumber = stackTraceElement.getLineNumber();
+		List<UnitPlus> callSites = this.getPredecessors(unitPlus);
+		for(UnitPlus pred:callSites){
+			if(pred.getMethodPlus().getMethodName().equals(methodName)){
+				if(util.FileParser.isLineInMethod(fileName, className, lineNumber, pred.getMethodPlus())){
+					callSite = pred;
+				}
+			}
+		}
+		return callSite;
 	}
 
 	@Override

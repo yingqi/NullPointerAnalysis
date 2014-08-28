@@ -21,6 +21,7 @@ public class ExampleWithException {
 //			 analysis.createDispatcher();
 			 for(StackTraceElement ste:e.getStackTrace()){
 				 System.out.println("Error:" + ste.toString());
+				 System.out.println(ste.getFileName());
 			 }
 		}
 	}
