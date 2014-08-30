@@ -1,11 +1,7 @@
 package dispatcher;
 
+import java.io.FileNotFoundException;
 import java.util.List;
-
-
-
-
-
 
 import java_cup.internal_error;
 import bean.MethodPlus;
@@ -28,14 +24,20 @@ public interface Dispatcher {
 	public List<UnitPlus> getPredecessors(UnitPlus unitPlus);
 
 	/**
-	 * gets the call site based on the stack trace
+	 * gets the call site based on the stack trace There are two choices. If the
+	 * method overload is considered, then the first element of the list is the
+	 * calling method. The second choice is to get all the methods which share
+	 * the same name of the calling method.
+	 * 
 	 * @param unit
 	 * @param stackTrace
 	 * @return
-	 * @throws ClassNotFoundException 
+	 * @throws ClassNotFoundException
+	 * @throws FileNotFoundException
 	 */
-	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException;
+	public List<UnitPlus> getStackTraceCallSite(UnitPlus unitPlus,
+			StackTraceElement[] stackTrace, int indexOfStackTrace)
+			throws ClassNotFoundException, FileNotFoundException;
 
 	/**
 	 * gets all the call sites
