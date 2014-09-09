@@ -33,12 +33,14 @@ public class DispatcherFactory implements Dispatcher {
 	private StackTraceElement[] stackTrace;
 	private int indexOfStackTrace;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
+	boolean isDistinguishedOverload;
 	
 	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,StackTraceElement[] stackTrace, Map<MethodPlus, UnitGraphPlus> methodToUnitGraph){
 		this.completeCFG = completeCFG;
 		this.stackTrace = stackTrace;
 		indexOfStackTrace = 0;
 		this.methodToUnitGraph = methodToUnitGraph;
+		isDistinguishedOverload=false;
 	}
 
 	@Override
@@ -54,23 +56,39 @@ public class DispatcherFactory implements Dispatcher {
 	}
 
 	@Override
+<<<<<<< HEAD
 	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
 			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException {
 		UnitPlus callSite = null;
+=======
+	public List<UnitPlus> getStackTraceCallSite(UnitPlus unitPlus,
+			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException {
+		List<UnitPlus> callSites = new ArrayList<>();
+>>>>>>> origin/master
 		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
 		String methodName = stackTraceElement.getMethodName();
 		String className = stackTraceElement.getClassName();
 		String fileName = stackTraceElement.getFileName();
 		int lineNumber = stackTraceElement.getLineNumber();
-		List<UnitPlus> callSites = this.getPredecessors(unitPlus);
-		for(UnitPlus pred:callSites){
-			if(pred.getMethodPlus().getMethodName().equals(methodName)){
-				if(util.FileParser.isLineInMethod(fileName, className, lineNumber, pred.getMethodPlus())){
-					callSite = pred;
+		List<UnitPlus> preds = this.getPredecessors(unitPlus);
+		for(UnitPlus pred:preds){
+			if(isDistinguishedOverload){
+				if(pred.getMethodPlus().getMethodName().equals(methodName)){
+					//The isLineInMethod has not been down.
+					if(util.FileParser.isLineInMethod(fileName, className, lineNumber, pred.getMethodPlus())){
+						UnitPlus callSite = pred;
+						callSites.add(callSite);
+					}
+				}
+			}else{
+				if(pred.getMethodPlus().getMethodName().equals(methodName)){
+					UnitPlus callSite = pred;
+					callSites.add(callSite);
 				}
 			}
+			
 		}
-		return callSite;
+		return callSites;
 	}
 	
 	@Override
