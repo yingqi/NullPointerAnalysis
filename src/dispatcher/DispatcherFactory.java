@@ -17,6 +17,8 @@ import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
 import soot.dava.toolkits.base.AST.structuredAnalysis.StructuredAnalysis;
+import soot.tagkit.LineNumberTag;
+import soot.tagkit.Tag;
 import soot.toolkits.graph.UnitGraph;
 import soot.toolkits.graph.UnitGraphPlus;
 import soot.util.Chain;
@@ -56,15 +58,9 @@ public class DispatcherFactory implements Dispatcher {
 	}
 
 	@Override
-<<<<<<< HEAD
 	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
 			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException {
 		UnitPlus callSite = null;
-=======
-	public List<UnitPlus> getStackTraceCallSite(UnitPlus unitPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException {
-		List<UnitPlus> callSites = new ArrayList<>();
->>>>>>> origin/master
 		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
 		String methodName = stackTraceElement.getMethodName();
 		String className = stackTraceElement.getClassName();
@@ -76,19 +72,12 @@ public class DispatcherFactory implements Dispatcher {
 				if(pred.getMethodPlus().getMethodName().equals(methodName)){
 					//The isLineInMethod has not been down.
 					if(util.FileParser.isLineInMethod(fileName, className, lineNumber, pred.getMethodPlus())){
-						UnitPlus callSite = pred;
-						callSites.add(callSite);
+						callSite = pred;
 					}
 				}
-			}else{
-				if(pred.getMethodPlus().getMethodName().equals(methodName)){
-					UnitPlus callSite = pred;
-					callSites.add(callSite);
-				}
 			}
-			
 		}
-		return callSites;
+		return callSite;
 	}
 	
 	@Override
@@ -173,8 +162,17 @@ public class DispatcherFactory implements Dispatcher {
 		List<Unit> units = new ArrayList<>();
 		Body body = sootMethod.retrieveActiveBody();
 		PatchingChain<Unit> unitPatchingChain = body.getUnits();
-		//Chain<Unit> unitChain = unitPatchingChain.getNonPatchingChain();
-		unitChain.
+		for(Unit unit:unitPatchingChain){
+			List<Tag> tags = unit.getTags();
+			for(Tag tag:tags){
+				if(tag instanceof LineNumberTag){
+					LineNumberTag lineNumberTag = (LineNumberTag) tag;
+					if(lineNumber==lineNumberTag.getLineNumber()){
+						units.add(unit);
+					}
+				}
+			}
+		}
 		return units;
 	}
 

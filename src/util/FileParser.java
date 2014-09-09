@@ -18,7 +18,6 @@ public class FileParser {
 		String packageName = classType.getPackage().getName();
 		File file = new File(System.getProperty("user.dir")+"\\src\\"+packageName+"\\"+fileName);
 		Scanner scanner = new Scanner(file);
-<<<<<<< HEAD
 		int lineNumberInFile= 0;
 		while(!isLineInMethod&&scanner.hasNext()&&lineNumberInFile<=lineNumber){
 			String line = scanner.next();
@@ -33,11 +32,9 @@ public class FileParser {
 			}
 		}
 		scanner.close();
-=======
 		while(scanner.hasNext()){
 			
 		}
->>>>>>> origin/master
 		return isLineInMethod;
 	}
 	

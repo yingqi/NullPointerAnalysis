@@ -1,18 +1,10 @@
 package dispatcher;
 
 import java.io.FileNotFoundException;
+
 import java.util.List;
 
-<<<<<<< HEAD
 
-
-
-
-
-
-
-=======
->>>>>>> origin/master
 import java_cup.internal_error;
 import bean.MethodPlus;
 import bean.UnitPlus;
@@ -43,7 +35,6 @@ public interface Dispatcher {
 	 * @param unit
 	 * @param stackTrace
 	 * @return
-<<<<<<< HEAD
 	 * @throws ClassNotFoundException 
 	 * @throws FileNotFoundException 
 	 */
@@ -60,14 +51,6 @@ public interface Dispatcher {
 	 */
 	public List<UnitPlus> getStackTraceCallSites(UnitPlus unitPlus,
 			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException;
-=======
-	 * @throws ClassNotFoundException
-	 * @throws FileNotFoundException
-	 */
-	public List<UnitPlus> getStackTraceCallSite(UnitPlus unitPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace)
-			throws ClassNotFoundException, FileNotFoundException;
->>>>>>> origin/master
 
 	/**
 	 * gets all the call sites
