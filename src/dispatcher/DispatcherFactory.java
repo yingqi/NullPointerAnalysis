@@ -1,5 +1,6 @@
 package dispatcher;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -7,11 +8,18 @@ import java.util.Set;
 
 import bean.MethodPlus;
 import bean.UnitPlus;
+import soot.Body;
+import soot.PatchingChain;
+import soot.Scene;
+import soot.SootClass;
+import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
+import soot.dava.toolkits.base.AST.structuredAnalysis.StructuredAnalysis;
 import soot.toolkits.graph.UnitGraph;
 import soot.toolkits.graph.UnitGraphPlus;
+import soot.util.Chain;
 
 /**
  * class which implements the interface Dispathcer.
@@ -47,7 +55,7 @@ public class DispatcherFactory implements Dispatcher {
 
 	@Override
 	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException {
+			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException {
 		UnitPlus callSite = null;
 		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
 		String methodName = stackTraceElement.getMethodName();
@@ -63,6 +71,22 @@ public class DispatcherFactory implements Dispatcher {
 			}
 		}
 		return callSite;
+	}
+	
+	@Override
+	public List<UnitPlus> getStackTraceCallSites(UnitPlus unitPlus,
+			StackTraceElement[] stackTrace, int indexOfStackTrace)
+			throws ClassNotFoundException, FileNotFoundException {
+		List<UnitPlus> sTCallSites = new ArrayList<>();
+		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
+		String methodName = stackTraceElement.getMethodName();
+		List<UnitPlus> callSites = this.getPredecessors(unitPlus);
+		for(UnitPlus pred:callSites){
+			if(pred.getMethodPlus().getMethodName().equals(methodName)){
+				sTCallSites.add(pred);
+			}
+		}
+		return sTCallSites;
 	}
 
 	@Override
@@ -106,5 +130,35 @@ public class DispatcherFactory implements Dispatcher {
 		ValueBox useValueBox = useValueBoxs.get(useValueBoxs.size()-1);
 		return useValueBox.getValue();
 	}
+
+	@Override
+	public List<Unit> StackTraceElementToUnit(
+			StackTraceElement[] stackTrace, int indexOfStackTrace) {
+		List<Unit> units = new ArrayList<>();
+		StackTraceElement ste = stackTrace[indexOfStackTrace];
+		String className = ste.getClassName();
+		String methodName = ste.getMethodName();
+		int lineNumber = ste.getLineNumber();
+		SootClass sootClass = Scene.v().loadClassAndSupport(className);
+		List<SootMethod> sootMethods = sootClass.getMethods();
+//		List<SootMethod> matchedMehods = new ArrayList<>();
+		for(SootMethod sootMethod:sootMethods){
+			if(sootMethod.getName().equals(methodName)){
+//				matchedMehods.add(sootMethod);
+				units.addAll(methodInUnit(sootMethod,lineNumber));
+			}
+		}
+		return units;
+	}
+
+	private List<Unit> methodInUnit(SootMethod sootMethod, int lineNumber){
+		List<Unit> units = new ArrayList<>();
+		Body body = sootMethod.retrieveActiveBody();
+		PatchingChain<Unit> unitPatchingChain = body.getUnits();
+		//Chain<Unit> unitChain = unitPatchingChain.getNonPatchingChain();
+		unitChain.
+		return units;
+	}
+
 
 }

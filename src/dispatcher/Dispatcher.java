@@ -1,6 +1,9 @@
 package dispatcher;
 
+import java.io.FileNotFoundException;
 import java.util.List;
+
+
 
 
 
@@ -10,6 +13,7 @@ import java.util.List;
 import java_cup.internal_error;
 import bean.MethodPlus;
 import bean.UnitPlus;
+import soot.Unit;
 import soot.Value;
 
 /**
@@ -33,9 +37,21 @@ public interface Dispatcher {
 	 * @param stackTrace
 	 * @return
 	 * @throws ClassNotFoundException 
+	 * @throws FileNotFoundException 
 	 */
 	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException;
+			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException;
+	
+	/**
+	 * gets all the call sites based on the stack trace
+	 * @param unit
+	 * @param stackTrace
+	 * @return
+	 * @throws ClassNotFoundException 
+	 * @throws FileNotFoundException 
+	 */
+	public List<UnitPlus> getStackTraceCallSites(UnitPlus unitPlus,
+			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException;
 
 	/**
 	 * gets all the call sites
@@ -86,5 +102,7 @@ public interface Dispatcher {
 	 * @return
 	 */
 	public Value valueMap(Value defValue, UnitPlus unitPlus);
+	
+	public List<Unit> StackTraceElementToUnit(StackTraceElement[] stackTrace, int indexOfStackTrace);
 
 }
