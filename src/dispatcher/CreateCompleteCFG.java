@@ -85,11 +85,11 @@ public class CreateCompleteCFG {
 			Body body = sootMethod.retrieveActiveBody();
 			UnitGraphPlus unitGraph = new ExceptionalUnitGraphPlus(body);
 			List<Type> parameterList = sootMethod.getParameterTypes();
-			MethodPlus Method = new MethodPlus(sootMethod.getName(),
+			MethodPlus methodPlus = new MethodPlus(sootMethod.getName(),
 					classNameString, parameterList);
-			Methods.add(Method);
-			methodToUnitGraph.put(Method, unitGraph);
-			this.createCFGsForMethod(unitGraph, Method);
+			Methods.add(methodPlus);
+			methodToUnitGraph.put(methodPlus, unitGraph);
+			this.createCFGsForMethod(unitGraph, methodPlus);
 		}
 
 		// }
@@ -103,7 +103,6 @@ public class CreateCompleteCFG {
 	}
 
 	private void createCFGsForMethod(UnitGraphPlus unitGraph, MethodPlus Method) {
-
 		Iterator<Unit> unitIterator = unitGraph.iterator();
 		int index = UnitDirectory.size();
 		while (unitIterator.hasNext()) {

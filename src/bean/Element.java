@@ -1,5 +1,8 @@
 package bean;
 
+import soot.Value;
+import soot.jimple.internal.AbstractDefinitionStmt;
+
 /**
  * element=UnitPlus connected with state
  */
@@ -34,7 +37,12 @@ public class Element
 	}
 	public void transform()
 	{
-		//TO DO		
+		boolean containsValueInState = false;
+		AbstractDefinitionStmt ads  = (AbstractDefinitionStmt) unitPlus.getUnit();
+		Value rightValue = ads.getRightOp();
+		if(rightValue.equals(state.getValue())){
+			state.replaceValue(ads.getLeftOp());
+		}
 	}
 	public boolean isPredicate()
 	{

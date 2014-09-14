@@ -17,6 +17,7 @@ import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
 import soot.dava.toolkits.base.AST.structuredAnalysis.StructuredAnalysis;
+import soot.jimple.internal.AbstractDefinitionStmt;
 import soot.tagkit.LineNumberTag;
 import soot.tagkit.Tag;
 import soot.toolkits.graph.UnitGraph;
@@ -102,18 +103,31 @@ public class DispatcherFactory implements Dispatcher {
 	}
 
 	@Override
-	public List<UnitPlus> getExitUnitPlus(MethodPlus Method) {
+	public UnitPlus getExitUnitPlus(MethodPlus Method) {
 		List<Unit> tailUnits = new ArrayList<>();
-		List<UnitPlus> tailUnitPlus = new ArrayList<>();
+		UnitPlus tailUnitPlus = null;
 		tailUnits = methodToUnitGraph.get(Method).getTails();
+		Unit tailUnit = tailUnits.get(0);
 		Set<UnitPlus> keys = completeCFG.keySet();
 		for(UnitPlus key:keys){
-			for(Unit tailUnit:tailUnits){
 				if(key.getUnit().equals(tailUnit))
-					tailUnitPlus.add(key);
-			}
+					tailUnitPlus=key;
 		}
 		return tailUnitPlus;
+	}
+	
+	@Override
+	public UnitPlus getEntryUnitPlus(MethodPlus Method) {
+		List<Unit> headUnits = new ArrayList<>();
+		UnitPlus headUnitPlus = null;
+		headUnits = methodToUnitGraph.get(Method).getTails();
+		Unit headUnit = headUnits.get(0);
+		Set<UnitPlus> keys = completeCFG.keySet();
+		for(UnitPlus key:keys){
+				if(key.getUnit().equals(headUnit))
+					headUnitPlus=key;
+		}
+		return headUnitPlus;
 	}
 
 	@Override
@@ -175,6 +189,22 @@ public class DispatcherFactory implements Dispatcher {
 		}
 		return units;
 	}
+
+	@Override
+	public boolean isTransform(UnitPlus unitPlus) {
+		boolean isTransform = false;
+		if(unitPlus.getUnit() instanceof AbstractDefinitionStmt){
+			isTransform = true;
+		}
+		return isTransform;
+	}
+
+	@Override
+	public Map<MethodPlus, UnitGraphPlus> getMethodToUnitGraphPlus() {
+		return methodToUnitGraph;
+	}
+
+
 
 
 }

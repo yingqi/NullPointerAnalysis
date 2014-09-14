@@ -23,7 +23,7 @@ public class Summary {
 	}
 	public State getInformation(Element element)
 	{
-		State incomingState=element.getState();
+		State incomingState=element.getState();	
 		MethodPlus methodPlus = element.getUnitPlus().getMethodPlus();
 		for(Record record:information)
 		{

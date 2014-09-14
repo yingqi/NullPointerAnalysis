@@ -1,27 +1,32 @@
 package bean;
 
+import soot.Value;
+
 
 /**
  * This class is the state of a node
  */
 /**
  * @version 2014-08-06
- * @author Lind
+ * @author Yingqi
  *
  */
 public class State
 {
-	public State(String variable,String thisStatement)
-	{
-		this.variable=variable;
-		this.thisStatement=thisStatement;
+	private Value variable;
+	
+	public State(Value initValue){
+		variable = initValue;
 	}
-//	public State map(UnitPlus s)
-//	{
-//		//TO DO
-//		return null;
-//	}
-	private String variable;//root predicate:<variable=null>
-	private String thisStatement;//<thisStatement!=null>
-	public static final State EMPTY= new State(null,null);
+	
+	public void replaceValue(Value value){
+		variable = value;
+	}
+	
+	public Value getValue(){
+		return variable;
+	}
+	
+	
+	
 }

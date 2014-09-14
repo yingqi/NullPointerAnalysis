@@ -1,15 +1,17 @@
 package dispatcher;
 
 import java.io.FileNotFoundException;
-
 import java.util.List;
 
+
+import java.util.Map;
 
 import java_cup.internal_error;
 import bean.MethodPlus;
 import bean.UnitPlus;
 import soot.Unit;
 import soot.Value;
+import soot.toolkits.graph.UnitGraphPlus;
 
 /**
  * 
@@ -66,7 +68,15 @@ public interface Dispatcher {
 	 * @param methodName
 	 * @return
 	 */
-	public List<UnitPlus> getExitUnitPlus(MethodPlus rteMethod);
+	public UnitPlus getExitUnitPlus(MethodPlus rteMethod);
+	
+	/**
+	 * gets the entry units of a method
+	 * 
+	 * @param methodName
+	 * @return
+	 */
+	public UnitPlus getEntryUnitPlus(MethodPlus rteMethod);
 
 	/**
 	 * get method name where the unit belongs
@@ -93,6 +103,14 @@ public interface Dispatcher {
 	 * @return
 	 */
 	public boolean isCall(UnitPlus unitPlus);
+	
+	/**
+	 * return true if the unit is a definition unit or identity statement.
+	 * 
+	 * @param unit
+	 * @return
+	 */
+	public boolean isTransform(UnitPlus unitPlus);
 
 	/**
 	 * map the definition value to the use value. return the last use value.
@@ -101,6 +119,8 @@ public interface Dispatcher {
 	 * @return
 	 */
 	public Value valueMap(Value defValue, UnitPlus unitPlus);
+	
+	public Map<MethodPlus, UnitGraphPlus> getMethodToUnitGraphPlus();
 	
 	public List<Unit> StackTraceElementToUnit(StackTraceElement[] stackTrace, int indexOfStackTrace);
 
