@@ -86,7 +86,7 @@ public class CreateCompleteCFG {
 			UnitGraphPlus unitGraph = new ExceptionalUnitGraphPlus(body);
 			List<Type> parameterList = sootMethod.getParameterTypes();
 			MethodPlus methodPlus = new MethodPlus(sootMethod.getName(),
-					classNameString, parameterList);
+					classNameString, parameterList, sootMethod);
 			Methods.add(methodPlus);
 			methodToUnitGraph.put(methodPlus, unitGraph);
 			this.createCFGsForMethod(unitGraph, methodPlus);

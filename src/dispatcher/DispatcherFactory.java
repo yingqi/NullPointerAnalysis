@@ -1,6 +1,7 @@
 package dispatcher;
 
 import java.io.FileNotFoundException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,13 +17,10 @@ import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
-import soot.dava.toolkits.base.AST.structuredAnalysis.StructuredAnalysis;
 import soot.jimple.internal.AbstractDefinitionStmt;
 import soot.tagkit.LineNumberTag;
 import soot.tagkit.Tag;
-import soot.toolkits.graph.UnitGraph;
 import soot.toolkits.graph.UnitGraphPlus;
-import soot.util.Chain;
 
 /**
  * class which implements the interface Dispathcer.
@@ -33,15 +31,11 @@ import soot.util.Chain;
  */
 public class DispatcherFactory implements Dispatcher {
 	private Map<UnitPlus, List<UnitPlus>> completeCFG;
-	private StackTraceElement[] stackTrace;
-	private int indexOfStackTrace;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
 	boolean isDistinguishedOverload;
 	
 	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,StackTraceElement[] stackTrace, Map<MethodPlus, UnitGraphPlus> methodToUnitGraph){
 		this.completeCFG = completeCFG;
-		this.stackTrace = stackTrace;
-		indexOfStackTrace = 0;
 		this.methodToUnitGraph = methodToUnitGraph;
 		isDistinguishedOverload=false;
 	}
@@ -153,27 +147,25 @@ public class DispatcherFactory implements Dispatcher {
 	}
 
 	@Override
-	public List<Unit> StackTraceElementToUnit(
+	public List<UnitPlus> StackTraceElementToUnit(
 			StackTraceElement[] stackTrace, int indexOfStackTrace) {
-		List<Unit> units = new ArrayList<>();
+		List<UnitPlus> units = new ArrayList<>();
 		StackTraceElement ste = stackTrace[indexOfStackTrace];
 		String className = ste.getClassName();
 		String methodName = ste.getMethodName();
 		int lineNumber = ste.getLineNumber();
 		SootClass sootClass = Scene.v().loadClassAndSupport(className);
 		List<SootMethod> sootMethods = sootClass.getMethods();
-//		List<SootMethod> matchedMehods = new ArrayList<>();
 		for(SootMethod sootMethod:sootMethods){
 			if(sootMethod.getName().equals(methodName)){
-//				matchedMehods.add(sootMethod);
-				units.addAll(methodInUnit(sootMethod,lineNumber));
+				units.addAll(lineNumberToUnit(sootMethod,lineNumber));
 			}
 		}
 		return units;
 	}
 
-	private List<Unit> methodInUnit(SootMethod sootMethod, int lineNumber){
-		List<Unit> units = new ArrayList<>();
+	private List<UnitPlus> lineNumberToUnit(SootMethod sootMethod, int lineNumber){
+		List<UnitPlus> units = new ArrayList<>();
 		Body body = sootMethod.retrieveActiveBody();
 		PatchingChain<Unit> unitPatchingChain = body.getUnits();
 		for(Unit unit:unitPatchingChain){
@@ -182,7 +174,12 @@ public class DispatcherFactory implements Dispatcher {
 				if(tag instanceof LineNumberTag){
 					LineNumberTag lineNumberTag = (LineNumberTag) tag;
 					if(lineNumber==lineNumberTag.getLineNumber()){
-						units.add(unit);
+						Set<UnitPlus> unitPluses = completeCFG.keySet();
+						for(UnitPlus unitPlus:unitPluses){
+							if (unit.equals(unitPlus.getUnit())) {
+								units.add(unitPlus);
+							}
+						}
 					}
 				}
 			}

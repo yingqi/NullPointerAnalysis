@@ -3,6 +3,8 @@ package analysis;
 import java.util.*;
 
 import java_cup.lalr_item;
+import soot.Body;
+import soot.Local;
 import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
@@ -27,6 +29,13 @@ import dispatcher.Dispatcher;
  */
 public class ComputeNPA {
 
+	
+	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraphPlusMap;
+	private ArrayList<UnitPlus> NPA;
+	private Stack<MethodPlus> CS;
+	private Dispatcher dispatcher;
+	private Summary summary;
+	
 	public ComputeNPA() {
 		NPA = new ArrayList<>();
 		Analysis rteAnalysis = new Analysis();
@@ -54,7 +63,6 @@ public class ComputeNPA {
 						NPA.add(upPred);
 					}
 				} else if (dispatcher.isCall(upPred)) {
-					// what is summary?
 					State outgoingState = summary.getInformation(predElement);
 					if (outgoingState == null) {
 						MethodPlus methodPlus = upPred.getMethodPlus();
@@ -87,32 +95,23 @@ public class ComputeNPA {
 
 	private State mapAtEntryOfMethod(State state, UnitPlus entrynode,
 			UnitPlus upPred) {
-		String param = "";
-		UnitGraphPlus unitGraphPlus = methodToUnitGraphPlusMap.get(entrynode.getMethodPlus());
-		Unit head = unitGraphPlus.getHead();
-		while(!unitGraphPlus.getSuccsOf(head).equals(unitGraphPlus.getTail())){
-			List<Unit> units = unitGraphPlus.getSuccsOf(head);
-			for(Unit unit:units){
-				if(unit instanceof AbstractDefinitionStmt){
-					AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) unit;
-					Value leftValue = abstractDefinitionStmt.getLeftOp();
-					if(leftValue.equals(state.getValue())){
-						param = abstractDefinitionStmt.getRightOp().toString();
-					}
-				}
+		int numberOfParameters = entrynode.getMethodPlus().getSootmethod().getParameterCount();
+		int i=0;
+		for(;i<numberOfParameters;i++){
+			Value localValue = (Value) entrynode.getMethodPlus().getSootmethod().retrieveActiveBody().getParameterLocal(i);
+			if(state.getValue().equals(localValue)){
+				break;
 			}
 		}
-		int count = Integer.parseInt(param.substring(9, 9));
 		JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
 		List<ValueBox> useValueBoxs = jInvokeStmt.getUseBoxes();
-		Value value = useValueBoxs.get(count).getValue();
+		Value value = useValueBoxs.get(i).getValue();
 		state.replaceValue(value);
 		return state;
 	}
 
 	private State mapAtCall(State state,UnitPlus upPred, UnitPlus exitnode)
 	{
-//		MethodPlus startMP = startUP.getMethodPlus();
 		MethodPlus calledMethodPlus = exitnode.getMethodPlus();
 		JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
 		List<ValueBox> useValueBoxs = jInvokeStmt.getUseBoxes();
@@ -124,25 +123,13 @@ public class ComputeNPA {
 			count++;
 		}
 		UnitGraphPlus unitGraphPlus = methodToUnitGraphPlusMap.get(calledMethodPlus);
-		Unit head = unitGraphPlus.getHead();
-		while(!unitGraphPlus.getSuccsOf(head).equals(unitGraphPlus.getTail())){
-			List<Unit> units = unitGraphPlus.getSuccsOf(head);
-			for(Unit unit:units){
-				if(unit instanceof AbstractDefinitionStmt){
-					AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) unit;
-					Value rightValue = abstractDefinitionStmt.getRightOp();
-					if(rightValue.toString().contains("@parameter"+count)){
-						state.replaceValue(abstractDefinitionStmt.getLeftOp());
-					}
-				}
-			}
-		}
+		Body body = calledMethodPlus.getSootmethod().retrieveActiveBody();
+		Value parameterValue  =(Value) body.getParameterLocal(count);
+		state.replaceValue(parameterValue);;
 		return state;
 	}
-	
-	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraphPlusMap;
-	private ArrayList<UnitPlus> NPA;
-	private Stack<MethodPlus> CS;
-	private Dispatcher dispatcher;
-	private Summary summary;
+
+	public ArrayList<UnitPlus> getNPA(){
+		return NPA;
+	}
 }

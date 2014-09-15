@@ -1,5 +1,7 @@
 package example;
 
+import test.Analysis;
+
 
 public class ExampleWithException {
 	String string1, string2;
@@ -17,12 +19,17 @@ public class ExampleWithException {
 			}
 			rTEExampleException.method4(1);
 		} catch (NullPointerException e) {
-//			 Analysis analysis = new Analysis(e.getStackTrace());
-//			 analysis.createDispatcher();
-			 for(StackTraceElement ste:e.getStackTrace()){
-				 System.out.println("Error:" + ste.toString());
-				 System.out.println(ste.getFileName());
-			 }
+			 e.printStackTrace();
+//			 for(StackTraceElement ste:e.getStackTrace()){
+//				 System.out.println("Error:" + ste.toString());
+//				 System.out.println(ste.getFileName());
+//			 }
+			 System.out.println("************");
+			 Analysis analysis = new Analysis();
+			 analysis.createDispatcher(e.getStackTrace());
+			 analysis.doAnalysis();
+			 
+
 		}
 	}
 

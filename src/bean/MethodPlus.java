@@ -1,6 +1,9 @@
 package bean;
 
 import java.util.List;
+
+import soot.Body;
+import soot.SootMethod;
 import soot.Type;
 
 /**
@@ -14,6 +17,7 @@ public class MethodPlus {
 	private String methodName;
 	private List<Type> parameterSootTypes;
 	private String className;
+	private SootMethod sootMethod;
 
 	/**
 	 * initiate method
@@ -22,10 +26,11 @@ public class MethodPlus {
 	 * @param parameterSootTypes
 	 */
 	public MethodPlus(String methodName, String className,
-			List<Type> parameterSootTypes) {
+			List<Type> parameterSootTypes, SootMethod sootMethod) {
 		this.methodName = methodName;
 		this.className = className;
 		this.parameterSootTypes = parameterSootTypes;
+		this.sootMethod = sootMethod;
 	}
 
 	/**
@@ -53,6 +58,10 @@ public class MethodPlus {
 	 */
 	public List<Type> getParameterSootTypes() {
 		return parameterSootTypes;
+	}
+	
+	public SootMethod getSootmethod(){
+		return sootMethod;
 	}
 
 	@Override

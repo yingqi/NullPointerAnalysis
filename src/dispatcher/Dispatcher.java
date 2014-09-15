@@ -122,6 +122,6 @@ public interface Dispatcher {
 	
 	public Map<MethodPlus, UnitGraphPlus> getMethodToUnitGraphPlus();
 	
-	public List<Unit> StackTraceElementToUnit(StackTraceElement[] stackTrace, int indexOfStackTrace);
+	public List<UnitPlus> StackTraceElementToUnit(StackTraceElement[] stackTrace, int indexOfStackTrace);
 
 }
