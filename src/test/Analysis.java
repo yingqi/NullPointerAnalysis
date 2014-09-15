@@ -13,6 +13,7 @@ import bean.State;
 import bean.UnitPlus;
 import soot.Scene;
 import soot.SootClass;
+import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
@@ -29,15 +30,15 @@ public class Analysis {
 	private StackTraceElement[] stackTrace;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
 	private Dispatcher dispatcher;
+	private List<SootMethod> sootMethods;
 
-	public Analysis(){
-		classNameString = "analysis.RTEExample";
-		sootClassPath = null;
+	public Analysis(StackTraceElement[] stackTrace){
+		StackTraceElement ste = stackTrace[0];
+		classNameString = ste.getClassName();
+		sootClassPath=System.getProperty("user.dir")+"\\bin";;
 		phaseOption1 = "jpt";
 		phaseOption2 = "use-original-names:true";
-	}	
-	public void createDispatcher(StackTraceElement[] stackTrace) {
-		sootClassPath=System.getProperty("user.dir")+"\\bin";
+		this.sootMethods = new ArrayList<>();
 		Options.v().set_allow_phantom_refs(true);
 		Options.v().set_app(true);
 		Options.v().set_whole_program(true);
@@ -46,18 +47,19 @@ public class Analysis {
 		Options.v().setPhaseOption(phaseOption1, phaseOption2);
 
 		SootClass sootclass = Scene.v().loadClassAndSupport(classNameString);
+//		Scene.v().addBasicClass("example.ExampleWithException");
 		Scene.v().loadNecessaryClasses();
 
 		CreateCompleteCFG completeCFG = new CreateCompleteCFG(sootclass, classNameString);
+		this.sootMethods = sootclass.getMethods();
 		this.stackTrace = stackTrace;
 		this.completeCFG = completeCFG.createCFG();
 		this.methodToUnitGraph = completeCFG.getMethodToUnitGraph();
-		
 	}
 	
 	public void doAnalysis(){
-		dispatcher = new DispatcherFactory(this.completeCFG, this.stackTrace, methodToUnitGraph);
-		ComputeNPA computeNPA = new ComputeNPA();
+		dispatcher = new DispatcherFactory(this.completeCFG, this.stackTrace, methodToUnitGraph, sootMethods);
+		ComputeNPA computeNPA = new ComputeNPA(this);
 		List<UnitPlus> errorUnits = dispatcher.StackTraceElementToUnit(stackTrace, 0);
 		for(UnitPlus errorUnit:errorUnits){
 			List<ValueBox> possibleErrorBoxs = errorUnit.getUnit().getUseBoxes();

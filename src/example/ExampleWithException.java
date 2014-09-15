@@ -20,16 +20,9 @@ public class ExampleWithException {
 			rTEExampleException.method4(1);
 		} catch (NullPointerException e) {
 			 e.printStackTrace();
-//			 for(StackTraceElement ste:e.getStackTrace()){
-//				 System.out.println("Error:" + ste.toString());
-//				 System.out.println(ste.getFileName());
-//			 }
 			 System.out.println("************");
-			 Analysis analysis = new Analysis();
-			 analysis.createDispatcher(e.getStackTrace());
+			 Analysis analysis = new Analysis(e.getStackTrace());
 			 analysis.doAnalysis();
-			 
-
 		}
 	}
 

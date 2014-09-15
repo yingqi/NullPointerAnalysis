@@ -32,12 +32,15 @@ import soot.toolkits.graph.UnitGraphPlus;
 public class DispatcherFactory implements Dispatcher {
 	private Map<UnitPlus, List<UnitPlus>> completeCFG;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
-	boolean isDistinguishedOverload;
+	private boolean isDistinguishedOverload;
+	private List<SootMethod> sootMethods;
 	
-	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,StackTraceElement[] stackTrace, Map<MethodPlus, UnitGraphPlus> methodToUnitGraph){
+	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,StackTraceElement[] stackTrace, Map<MethodPlus, UnitGraphPlus> methodToUnitGraph, List<SootMethod> sootMethods){
 		this.completeCFG = completeCFG;
 		this.methodToUnitGraph = methodToUnitGraph;
 		isDistinguishedOverload=false;
+		this.sootMethods = new ArrayList<>();
+		this.sootMethods = sootMethods;
 	}
 
 	@Override
@@ -154,8 +157,6 @@ public class DispatcherFactory implements Dispatcher {
 		String className = ste.getClassName();
 		String methodName = ste.getMethodName();
 		int lineNumber = ste.getLineNumber();
-		SootClass sootClass = Scene.v().loadClassAndSupport(className);
-		List<SootMethod> sootMethods = sootClass.getMethods();
 		for(SootMethod sootMethod:sootMethods){
 			if(sootMethod.getName().equals(methodName)){
 				units.addAll(lineNumberToUnit(sootMethod,lineNumber));
