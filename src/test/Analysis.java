@@ -92,7 +92,10 @@ public class Analysis {
 		}
 		ArrayList<UnitPlus> NPA = computeNPA.getNPA();
 		for(UnitPlus unitPlus:NPA){
-			System.out.println(unitPlus.getUnit());
+			String methodString = String.format("%-30s", unitPlus.getMethodPlus().toString());
+			System.out.println("unit" + '\t' + unitPlus.getNumber() + '\t'
+					+ methodString 
+					+ unitPlus.getUnit().toString());
 		}
 	}
 	

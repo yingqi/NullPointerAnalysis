@@ -10,6 +10,8 @@ public class UnitPlus {
 	private MethodPlus Method;
 //	private State state;
 	private boolean isVisited;
+	private boolean isCall;
+	private boolean isEntry;
 	
 	/**
 	 * constructor for units which is not a caller.
@@ -23,6 +25,8 @@ public class UnitPlus {
 		attributeString="null";
 		this.Method = Method;
 		this.isVisited = false;
+		isCall = false;
+		isEntry = false;
 	}
 	
 	/**
@@ -38,6 +42,8 @@ public class UnitPlus {
 		this.unit = unit;
 		this.Method = Method;
 		this.isVisited = false;
+		isCall = false;
+		isEntry = false;
 	}
 
 	/**
@@ -103,15 +109,7 @@ public class UnitPlus {
 	public MethodPlus getMethodPlus(){
 		return Method;
 	}
-
-//	public State getState() {
-//		return state;
-//	}
-//
-//	public void setState(State state) {
-//		this.state = state;
-//	}
-
+	
 	public boolean isVisited() {
 		return isVisited;
 	}
@@ -120,15 +118,19 @@ public class UnitPlus {
 		this.isVisited = isVisited;
 	}
 
-//	public State transform(State nextState) {
-//		//TO DO 
-//		State newState = null;
-//		return newState;
-//	}
-//	
-	public boolean isPredicate()
-	{
-		boolean isPredicate = false;
-		return isPredicate;
+	public boolean isCall() {
+		return isCall;
+	}
+
+	public void setCall(boolean isCall) {
+		this.isCall = isCall;
+	}
+
+	public boolean isEntry() {
+		return isEntry;
+	}
+
+	public void setEntry(boolean isEntry) {
+		this.isEntry = isEntry;
 	}
 }

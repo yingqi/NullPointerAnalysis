@@ -152,9 +152,11 @@ public class CreateCompleteCFG {
 	private void combineAllCFGs() {
 		for (UnitPlus ud : UnitDirectory) {
 			if (ud.getAttribute().equals("a")) {
+				boolean isMethodInClass = false;
 				for (MethodPlus method : Methods) {
 					if (ud.getUnit().toString()
 							.contains(method.getMethodName())) {
+						isMethodInClass = true;
 						UnitGraphPlus unitGraph = methodToUnitGraph.get(method);
 						Unit head = unitGraph.getHead();
 						for (UnitPlus headUnitPlus : UnitDirectory) {
@@ -164,14 +166,18 @@ public class CreateCompleteCFG {
 								List<UnitPlus> preds = completeCFG
 										.get(headUnitPlus);
 								preds.add(ud);
+								ud.setEntry(true);
 							}
 						}
 					}
 				}
+				//For methods in other class
 			} else if (ud.getAttribute().equals("b")) {
+				boolean isMethodInClass = false;
 				for (MethodPlus method : Methods) {
 					if (ud.getUnit().toString()
 							.contains(method.getMethodName())) {
+						isMethodInClass = true;
 						UnitGraphPlus unitGraph = methodToUnitGraph.get(method);
 						List<UnitPlus> preds = completeCFG.get(ud);
 						Unit tail = unitGraph.getTail();
@@ -180,7 +186,17 @@ public class CreateCompleteCFG {
 									&& (!tailUnitPlus.getAttribute()
 											.equals("a"))) {
 								preds.add(tailUnitPlus);
+								ud.setCall(true);
 							}
+						}
+					}
+				}
+				//For methods in other class
+				if(!isMethodInClass){
+					for (UnitPlus udPred : UnitDirectory){
+						if(udPred.getNumber()==ud.getNumber()&&udPred.getAttribute().equals("a")){
+							List<UnitPlus> preds = completeCFG.get(ud);
+							preds.add(udPred);
 						}
 					}
 				}

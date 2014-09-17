@@ -148,12 +148,12 @@ public class DispatcherFactory implements Dispatcher {
 
 	@Override
 	public boolean isEntry(UnitPlus unitPlus) {
-		return unitPlus.getAttribute().equals("a");
+		return unitPlus.isEntry();
 	}
 
 	@Override
 	public boolean isCall(UnitPlus unitPlus) {
-		return unitPlus.getAttribute().equals("b");
+		return unitPlus.isCall();
 	}
 
 	@Override

@@ -67,6 +67,7 @@ public class ComputeNPA {
 						worklist.push(predElement);
 					}
 				} else if (dispatcher.isCall(upPred)) {
+					System.out.println("IsCall:   "+upPred.getNumber()+upPred.getAttribute());
 					State outgoingState = summary.getInformation(predElement);
 					if (outgoingState == null) {
 						MethodPlus methodPlus =null;
@@ -93,13 +94,13 @@ public class ComputeNPA {
 			}
 		}
 		//What does this part do?
-		if (CS.size() == 0) {
-			List<UnitPlus> callSites = dispatcher.getAllCallSites(unitPlus);
-			for (UnitPlus callSite : callSites) {
-				State outgoingState = mapAtEntryOfMethod(state, unitPlus,callSite);
-				analyzeMethod(callSite, outgoingState);
-			}
-		}
+//		if (CS.size() == 0) {
+//			List<UnitPlus> callSites = dispatcher.getAllCallSites(unitPlus);
+//			for (UnitPlus callSite : callSites) {
+//				State outgoingState = mapAtEntryOfMethod(state, unitPlus,callSite);
+//				analyzeMethod(callSite, outgoingState);
+//			}
+//		}
 		//What does this part do?
 	}
 
@@ -113,7 +114,6 @@ public class ComputeNPA {
 				break;
 			}
 		}
-		System.out.println(upPred.getUnit());
 		JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
 		List<ValueBox> useValueBoxs = jInvokeStmt.getUseBoxes();
 		Value value = useValueBoxs.get(i).getValue();

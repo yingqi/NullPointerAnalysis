@@ -1,6 +1,9 @@
 package internal;
 
+import java.util.List;
+
 import soot.Value;
+import soot.ValueBox;
 import soot.jimple.internal.AbstractDefinitionStmt;
 
 /**
@@ -45,7 +48,15 @@ public class Element
 	}
 	public boolean isPredicate()
 	{
-		return unitPlus.isPredicate();
+		boolean isPredicate = false;
+		List<ValueBox> defValueBoxs = unitPlus.getUnit().getDefBoxes();
+		for(ValueBox defValueBox:defValueBoxs){
+			if (defValueBox.getValue().equals(state.getValue())) {
+				isPredicate = true;
+			}
+		}
+		
+		return isPredicate;
 	}
 	private UnitPlus unitPlus;
 	private State state;
