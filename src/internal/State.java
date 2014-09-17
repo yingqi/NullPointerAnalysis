@@ -27,6 +27,19 @@ public class State
 		return variable;
 	}
 	
+	@Override
+	public String toString(){
+		return variable.toString();
+	}
 	
+	@Override
+	public boolean equals(Object object){
+		if(! (object instanceof State)){
+			return false;
+		}else {
+			State state = (State) object;
+			return this.getValue().equals(state.getValue());
+		}
+	}
 	
 }

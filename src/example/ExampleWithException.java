@@ -21,7 +21,9 @@ public class ExampleWithException {
 		} catch (NullPointerException e) {
 			 e.printStackTrace();
 			 System.out.println("************");
+			 System.out.println(e.getStackTrace()[0]);
 			 Analysis analysis = new Analysis(e.getStackTrace());
+			 analysis.showCFG();
 			 analysis.doAnalysis();
 		}
 	}
@@ -31,7 +33,7 @@ public class ExampleWithException {
 		string1 = null;
 		string2 = null;
 		if (val > 1) {
-			string2 = new String("abc");
+//			string2 = new String("abc");
 		}
 	}
 

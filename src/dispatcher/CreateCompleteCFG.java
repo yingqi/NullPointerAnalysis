@@ -166,7 +166,7 @@ public class CreateCompleteCFG {
 								List<UnitPlus> preds = completeCFG
 										.get(headUnitPlus);
 								preds.add(ud);
-								ud.setEntry(true);
+//								ud.setEntry(true);
 							}
 						}
 					}

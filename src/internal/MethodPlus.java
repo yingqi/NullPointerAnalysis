@@ -68,8 +68,18 @@ public class MethodPlus {
 	public String toString() {
 		String methodString = methodName;
 		for (Type parameterSootType : parameterSootTypes) {
-			methodString = methodString + " " + parameterSootType.toString();
+			methodString =methodString + '\t' + parameterSootType.toString();
 		}
 		return methodString;
+	}
+	
+	@Override
+	public boolean equals(Object object){
+		if(! (object instanceof MethodPlus)){
+			return false;
+		}else {
+			MethodPlus methodPlus = (MethodPlus) object;
+			return this.getSootmethod().equals(methodPlus.getSootmethod());
+		}
 	}
 }

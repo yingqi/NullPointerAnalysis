@@ -1,5 +1,7 @@
 package internal;
 
+
+
 import soot.Unit;
 
 
@@ -9,9 +11,7 @@ public class UnitPlus {
 	private Unit unit;
 	private MethodPlus Method;
 //	private State state;
-	private boolean isVisited;
 	private boolean isCall;
-	private boolean isEntry;
 	
 	/**
 	 * constructor for units which is not a caller.
@@ -24,9 +24,7 @@ public class UnitPlus {
 		this.unit = unit;
 		attributeString="null";
 		this.Method = Method;
-		this.isVisited = false;
 		isCall = false;
-		isEntry = false;
 	}
 	
 	/**
@@ -41,9 +39,7 @@ public class UnitPlus {
 		this.attributeString = attributeString;
 		this.unit = unit;
 		this.Method = Method;
-		this.isVisited = false;
 		isCall = false;
-		isEntry = false;
 	}
 
 	/**
@@ -110,13 +106,6 @@ public class UnitPlus {
 		return Method;
 	}
 	
-	public boolean isVisited() {
-		return isVisited;
-	}
-
-	public void setVisited(boolean isVisited) {
-		this.isVisited = isVisited;
-	}
 
 	public boolean isCall() {
 		return isCall;
@@ -125,12 +114,31 @@ public class UnitPlus {
 	public void setCall(boolean isCall) {
 		this.isCall = isCall;
 	}
-
-	public boolean isEntry() {
-		return isEntry;
+	
+	@Override
+	public String toString(){
+		String toString ="";
+		if (attributeString.equals("null")) {
+			//Show the units
+			String methodString = String.format("%-30s", Method.toString());
+			toString ="unit" + '\t' + numberInteger + '\t'
+					+ methodString 
+					+unit.toString();
+		}else{
+			String methodString = String.format("%-30s",Method.toString());
+			System.out.println("unit" + '\t' + numberInteger + attributeString
+					+ '\t' + methodString 
+					+ unit.toString());
+		}
+		return toString;
 	}
-
-	public void setEntry(boolean isEntry) {
-		this.isEntry = isEntry;
+	
+	@Override public boolean equals(Object object){
+		if(! (object instanceof UnitPlus)){
+			return false;
+		}else {
+			UnitPlus unitPlus = (UnitPlus) object;
+			return numberInteger==unitPlus.getNumber()&&attributeString.equals(unitPlus.getAttribute());
+		}
 	}
 }

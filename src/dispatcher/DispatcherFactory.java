@@ -18,6 +18,7 @@ import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
 import soot.jimple.internal.AbstractDefinitionStmt;
+import soot.jimple.internal.BeginStmt;
 import soot.jimple.internal.JInvokeStmt;
 import soot.tagkit.LineNumberTag;
 import soot.tagkit.Tag;
@@ -54,8 +55,8 @@ public class DispatcherFactory implements Dispatcher {
 				if (key.getAttribute().equals(unitPlus.getAttribute())) {
 //					System.out.println("**"+key.getNumber()+key.getAttribute()+":"+unitPlus.getNumber()+unitPlus.getAttribute());
 					preds = completeCFG.get(key);
-					System.out.println(key.getNumber()+key.getAttribute());
-					System.out.println(preds.size());
+//					System.out.println(key.getNumber()+key.getAttribute());
+//					System.out.println(preds.size());
 				}
 			}	
 		}
@@ -106,7 +107,8 @@ public class DispatcherFactory implements Dispatcher {
 		List<UnitPlus> allCallSites = this.getPredecessors(unitPlus);
 		for(UnitPlus upPred:allCallSites){
 			if(! (upPred.getUnit() instanceof JInvokeStmt)){
-				System.out.println("The preds are not call sites!");
+				System.out.println("The Units are not call sites!");
+				System.out.println(upPred);
 				allCallSites =null;
 			}
 		}
@@ -148,7 +150,11 @@ public class DispatcherFactory implements Dispatcher {
 
 	@Override
 	public boolean isEntry(UnitPlus unitPlus) {
-		return unitPlus.isEntry();
+		boolean isEntry =false;
+		if(unitPlus.getUnit() instanceof BeginStmt){
+			isEntry =true;
+		}
+		return isEntry;
 	}
 
 	@Override
@@ -176,6 +182,12 @@ public class DispatcherFactory implements Dispatcher {
 				units.addAll(lineNumberToUnit(sootMethod,lineNumber));
 			}
 		}
+		for(UnitPlus unitPlus:units){
+			String methodString = String.format("%-30s", unitPlus.getMethodPlus().toString());
+			System.out.println("StackTraceElementToUnit" + '\t' + unitPlus.getNumber() + '\t'
+					+ methodString 
+					+ unitPlus.getUnit().toString());
+		}
 		return units;
 	}
 
@@ -190,8 +202,10 @@ public class DispatcherFactory implements Dispatcher {
 					LineNumberTag lineNumberTag = (LineNumberTag) tag;
 					if(lineNumber==lineNumberTag.getLineNumber()){
 						Set<UnitPlus> unitPluses = completeCFG.keySet();
+						boolean unitCounted = false;
 						for(UnitPlus unitPlus:unitPluses){
-							if (unit.equals(unitPlus.getUnit())) {
+							if (!unitCounted&&unit.equals(unitPlus.getUnit())) {
+								unitCounted = true;
 								units.add(unitPlus);
 							}
 						}
