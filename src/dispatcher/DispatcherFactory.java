@@ -1,14 +1,14 @@
 package dispatcher;
 
-import java.io.FileNotFoundException;
+import internal.MethodPlus;
+import internal.UnitPlus;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import bean.MethodPlus;
-import bean.UnitPlus;
 import soot.Body;
 import soot.PatchingChain;
 import soot.Scene;
@@ -18,6 +18,7 @@ import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
 import soot.jimple.internal.AbstractDefinitionStmt;
+import soot.jimple.internal.JInvokeStmt;
 import soot.tagkit.LineNumberTag;
 import soot.tagkit.Tag;
 import soot.toolkits.graph.UnitGraphPlus;
@@ -48,9 +49,15 @@ public class DispatcherFactory implements Dispatcher {
 		List<UnitPlus> preds = null;
 		Set<UnitPlus> keys = completeCFG.keySet();
 		for(UnitPlus key:keys){
-			if (key.getAttribute().equals(unitPlus.getAttribute())&&key.getNumber()==unitPlus.getNumber()) {
-				preds = completeCFG.get(key);
-			}
+			if (key.getNumber()==unitPlus.getNumber()) {
+//				System.out.println(key.getNumber()+key.getAttribute()+":"+unitPlus.getNumber()+unitPlus.getAttribute());
+				if (key.getAttribute().equals(unitPlus.getAttribute())) {
+//					System.out.println("**"+key.getNumber()+key.getAttribute()+":"+unitPlus.getNumber()+unitPlus.getAttribute());
+					preds = completeCFG.get(key);
+					System.out.println(key.getNumber()+key.getAttribute());
+					System.out.println(preds.size());
+				}
+			}	
 		}
 		return preds;
 	}
@@ -96,7 +103,14 @@ public class DispatcherFactory implements Dispatcher {
 
 	@Override
 	public List<UnitPlus> getAllCallSites(UnitPlus unitPlus) {
-		return this.getPredecessors(unitPlus);
+		List<UnitPlus> allCallSites = this.getPredecessors(unitPlus);
+		for(UnitPlus upPred:allCallSites){
+			if(! (upPred.getUnit() instanceof JInvokeStmt)){
+				System.out.println("The preds are not call sites!");
+				allCallSites =null;
+			}
+		}
+		return allCallSites;
 	}
 
 	@Override

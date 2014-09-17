@@ -1,13 +1,12 @@
 package analysis;
 
+import internal.Element;
+import internal.MethodPlus;
+import internal.Record;
+import internal.State;
+
 import java.util.ArrayList;
-
 import java.util.List;
-
-import bean.Element;
-import bean.MethodPlus;
-import bean.Record;
-import bean.State;
 
 /**
  * help to map the incoming state to outgoing state

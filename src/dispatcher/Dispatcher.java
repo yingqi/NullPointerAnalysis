@@ -1,5 +1,8 @@
 package dispatcher;
 
+import internal.MethodPlus;
+import internal.UnitPlus;
+
 import java.io.FileNotFoundException;
 import java.util.List;
 
@@ -7,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import java_cup.internal_error;
-import bean.MethodPlus;
-import bean.UnitPlus;
 import soot.Unit;
 import soot.Value;
 import soot.toolkits.graph.UnitGraphPlus;

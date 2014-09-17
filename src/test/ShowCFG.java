@@ -1,11 +1,11 @@
 package test;
 
-import java.util.List;
+import internal.UnitPlus;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import bean.UnitPlus;
 import dispatcher.CreateCompleteCFG;
 import soot.Scene;
 import soot.SootClass;
@@ -13,25 +13,26 @@ import soot.options.Options;
 
 public class ShowCFG {
 
-	static String classNameString = "example.Example";
-	static String sootClassPath = null;
-	static String phaseOption1 = "jpt";
-	static String phaseOption2 = "use-original-names:true";
+//	static String classNameString = "example.Example";
+//	static String sootClassPath = null;
+//	static String phaseOption1 = "jpt";
+//	static String phaseOption2 = "use-original-names:true";
 
 	public static void main(String[] args) {
-		sootClassPath=System.getProperty("user.dir")+"\\bin";
-		Options.v().set_allow_phantom_refs(true);
-		Options.v().set_app(true);
-		Options.v().set_whole_program(true);
-		Options.v().set_keep_line_number(true);
-		Options.v().set_soot_classpath(sootClassPath);
-		Options.v().setPhaseOption(phaseOption1, phaseOption2);
-
-		SootClass sootclass = Scene.v().loadClassAndSupport(classNameString);
-		Scene.v().loadNecessaryClasses();
-
-		CreateCompleteCFG createCFG = new CreateCompleteCFG(sootclass, classNameString);
-		Map<UnitPlus, List<UnitPlus>> completeCFG = createCFG.createCFG();
+//		sootClassPath=System.getProperty("user.dir")+"\\bin";
+//		Options.v().set_allow_phantom_refs(true);
+//		Options.v().set_app(true);
+//		Options.v().set_whole_program(true);
+//		Options.v().set_keep_line_number(true);
+//		Options.v().set_soot_classpath(sootClassPath);
+//		Options.v().setPhaseOption(phaseOption1, phaseOption2);
+//
+//		SootClass sootclass = Scene.v().loadClassAndSupport(classNameString);
+//		Scene.v().loadNecessaryClasses();
+//
+//		CreateCompleteCFG createCFG = new CreateCompleteCFG(sootclass, classNameString);
+		Analysis analysis = new Analysis();
+		Map<UnitPlus, List<UnitPlus>> completeCFG = analysis.getCFG();
 		// Show all Nodes
 		Set<UnitPlus> keySet = completeCFG.keySet();
 
@@ -91,8 +92,5 @@ public class ShowCFG {
 
 		}
 		// Show all Nodes
-		
-		
-
 	}
 }

@@ -1,14 +1,14 @@
 package util;
 
+import internal.MethodPlus;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
-
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 import soot.Type;
-import bean.MethodPlus;
 
 
 public class FileParser {

@@ -1,5 +1,8 @@
 package dispatcher;
 
+import internal.MethodPlus;
+import internal.UnitPlus;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import bean.MethodPlus;
-import bean.UnitPlus;
 import soot.Body;
 import soot.SootClass;
 import soot.SootMethod;

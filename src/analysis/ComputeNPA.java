@@ -1,5 +1,10 @@
 package analysis;
 
+import internal.Element;
+import internal.MethodPlus;
+import internal.State;
+import internal.UnitPlus;
+
 import java.util.*;
 
 import java_cup.lalr_item;
@@ -13,10 +18,6 @@ import soot.jimple.internal.AbstractDefinitionStmt;
 import soot.jimple.internal.JInvokeStmt;
 import soot.toolkits.graph.UnitGraphPlus;
 import test.Analysis;
-import bean.Element;
-import bean.MethodPlus;
-import bean.State;
-import bean.UnitPlus;
 import dispatcher.Dispatcher;
 
 /**
@@ -41,6 +42,7 @@ public class ComputeNPA {
 		dispatcher = analysis.getDispatcher();
 		methodToUnitGraphPlusMap = dispatcher.getMethodToUnitGraphPlus();
 		CS = new Stack<>();
+		summary = new Summary();
 	}
 
 
@@ -48,10 +50,9 @@ public class ComputeNPA {
 		Stack<Element> worklist = new Stack<Element>();
 		Element initializeElement = new Element(unitPlus, state);
 		worklist.push(initializeElement);
-		while (worklist.isEmpty() != false) {
-			Element presentElement = worklist.pop();// traverse the present
-													// statement
-			presentElement.setVisited();// mark the statement
+		while (!worklist.isEmpty()) {
+			Element presentElement = worklist.pop();
+			presentElement.setVisited();
 			List<UnitPlus> preds = dispatcher.getPredecessors(presentElement
 					.getUnitPlus());
 			for (UnitPlus upPred : preds) {
@@ -62,10 +63,18 @@ public class ComputeNPA {
 					if (predElement.isPredicate()) {
 						NPA.add(upPred);
 					}
+					if(!predElement.isVisited()){
+						worklist.push(predElement);
+					}
 				} else if (dispatcher.isCall(upPred)) {
 					State outgoingState = summary.getInformation(predElement);
 					if (outgoingState == null) {
-						MethodPlus methodPlus = upPred.getMethodPlus();
+						MethodPlus methodPlus =null;
+						for(UnitPlus upPredPred:dispatcher.getPredecessors(upPred)){
+							if(upPredPred.getAttribute()!=null){
+								methodPlus = upPredPred.getMethodPlus();
+							}
+						}
 						CS.push(methodPlus);
 						UnitPlus exitnode = dispatcher
 								.getExitUnitPlus(methodPlus);
@@ -117,17 +126,20 @@ public class ComputeNPA {
 		MethodPlus calledMethodPlus = exitnode.getMethodPlus();
 		JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
 		List<ValueBox> useValueBoxs = jInvokeStmt.getUseBoxes();
+		boolean callInvolvesState = false;
 		int count = 0;
 		for(ValueBox valueBox:useValueBoxs){
 			if(valueBox.getValue().equals(state.getValue())){
+				callInvolvesState = true;
 				break;
 			}
 			count++;
 		}
-		UnitGraphPlus unitGraphPlus = methodToUnitGraphPlusMap.get(calledMethodPlus);
-		Body body = calledMethodPlus.getSootmethod().retrieveActiveBody();
-		Value parameterValue  =(Value) body.getParameterLocal(count);
-		state.replaceValue(parameterValue);;
+		if (callInvolvesState) {
+			Body body = calledMethodPlus.getSootmethod().retrieveActiveBody();
+			Value parameterValue  =(Value) body.getParameterLocal(count);
+			state.replaceValue(parameterValue);
+		}
 		return state;
 	}
 

@@ -1,5 +1,9 @@
 package test;
 
+import internal.MethodPlus;
+import internal.State;
+import internal.UnitPlus;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -8,9 +12,6 @@ import dispatcher.CreateCompleteCFG;
 import dispatcher.Dispatcher;
 import dispatcher.DispatcherFactory;
 import analysis.ComputeNPA;
-import bean.MethodPlus;
-import bean.State;
-import bean.UnitPlus;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
@@ -47,12 +48,33 @@ public class Analysis {
 		Options.v().setPhaseOption(phaseOption1, phaseOption2);
 
 		SootClass sootclass = Scene.v().loadClassAndSupport(classNameString);
-//		Scene.v().addBasicClass("example.ExampleWithException");
 		Scene.v().loadNecessaryClasses();
 
 		CreateCompleteCFG completeCFG = new CreateCompleteCFG(sootclass, classNameString);
 		this.sootMethods = sootclass.getMethods();
 		this.stackTrace = stackTrace;
+		this.completeCFG = completeCFG.createCFG();
+		this.methodToUnitGraph = completeCFG.getMethodToUnitGraph();
+	}
+	
+	public Analysis(){
+		classNameString = "example.ExampleWithException";
+		sootClassPath=System.getProperty("user.dir")+"\\bin";;
+		phaseOption1 = "jpt";
+		phaseOption2 = "use-original-names:true";
+		this.sootMethods = new ArrayList<>();
+		Options.v().set_allow_phantom_refs(true);
+		Options.v().set_app(true);
+		Options.v().set_whole_program(true);
+		Options.v().set_keep_line_number(true);
+		Options.v().set_soot_classpath(sootClassPath);
+		Options.v().setPhaseOption(phaseOption1, phaseOption2);
+
+		SootClass sootclass = Scene.v().loadClassAndSupport(classNameString);
+		Scene.v().loadNecessaryClasses();
+
+		CreateCompleteCFG completeCFG = new CreateCompleteCFG(sootclass, classNameString);
+		this.sootMethods = sootclass.getMethods();
 		this.completeCFG = completeCFG.createCFG();
 		this.methodToUnitGraph = completeCFG.getMethodToUnitGraph();
 	}
@@ -76,6 +98,9 @@ public class Analysis {
 	
 	public Dispatcher getDispatcher(){
 		return dispatcher;
+	} 
+	public  Map<UnitPlus, List<UnitPlus>> getCFG(){
+		return completeCFG;
 	}
 
 }
