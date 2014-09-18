@@ -65,22 +65,6 @@ public class CreateCompleteCFG {
 	 * @return
 	 */
 	public Map<UnitPlus, List<UnitPlus>> createCFG() {
-		// try {
-		// Class<?> classType = Class.forName(classNameString);
-		// methods = classType.getDeclaredMethods();
-		// for (Method method : methods) {
-		// Class<?>[] parameterTypes = method.getParameterTypes();
-		// List<Class<?>> parameterList = new ArrayList<>();
-		// for(Class<?> parameterType:parameterTypes){
-		// parameterList.add(parameterType);
-		// System.out.println(parameterType);
-		// }
-		// SootMethod sootmethod = sootclass.getMethod(method.getName(),
-		// parameterList);
-		// Body body = sootmethod.retrieveActiveBody();
-		// UnitGraph unitGraph = new ExceptionalUnitGraph(body);
-		// methodToUnitGraph.put(methodName, unitGraph);
-
 		List<SootMethod> sootMethods = sootclass.getMethods();
 		for (SootMethod sootMethod : sootMethods) {
 			Body body = sootMethod.retrieveActiveBody();
@@ -93,10 +77,6 @@ public class CreateCompleteCFG {
 			this.createCFGsForMethod(unitGraph, methodPlus);
 		}
 
-		// }
-		// } catch (ClassNotFoundException e) {
-		// e.printStackTrace();
-		// }
 		this.createCompleteCFG();
 		this.combineAllCFGs();
 

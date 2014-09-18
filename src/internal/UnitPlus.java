@@ -126,9 +126,9 @@ public class UnitPlus {
 					+unit.toString();
 		}else{
 			String methodString = String.format("%-30s",Method.toString());
-			System.out.println("unit" + '\t' + numberInteger + attributeString
+			toString = "unit" + '\t' + numberInteger + attributeString
 					+ '\t' + methodString 
-					+ unit.toString());
+					+ unit.toString();
 		}
 		return toString;
 	}

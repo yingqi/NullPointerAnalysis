@@ -5,6 +5,7 @@ import internal.MethodPlus;
 import internal.State;
 import internal.UnitPlus;
 
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import java_cup.lalr_item;
@@ -36,6 +37,8 @@ public class ComputeNPA {
 	private Dispatcher dispatcher;
 	private Summary summary;
 	private Set<Element> elementSet;
+	private int indexOfStackTrace;
+	private StackTraceElement[] stackTrace;
 
 	public ComputeNPA(Analysis analysis) {
 		NPA = new ArrayList<>();
@@ -44,14 +47,17 @@ public class ComputeNPA {
 		CS = new Stack<>();
 		summary = new Summary();
 		elementSet = new HashSet<>();
+		indexOfStackTrace = 0;
+		stackTrace = analysis.getStackTraceElements();
 	}
 
-	public void analyzeMethod(UnitPlus unitPlus, State state) {
+	public void analyzeMethod(UnitPlus unitPlus, State state)
+			throws ClassNotFoundException, FileNotFoundException {
 		Stack<Element> worklist = new Stack<Element>();
 		Element initializeElement = new Element(unitPlus, state);
 		elementSet.add(initializeElement);
 		worklist.push(initializeElement);
-		while (!worklist.isEmpty()) {
+		while (!worklist.isEmpty() && (unitPlus != null)) {
 			Element presentElement = worklist.pop();
 			presentElement.setVisited();
 			List<UnitPlus> preds = dispatcher.getPredecessors(presentElement
@@ -69,14 +75,15 @@ public class ComputeNPA {
 					Element predElement = new Element(upPred, presentState);
 					elementSet.add(predElement);
 					if (dispatcher.isTransform(upPred)) {
-						
+
 						if (predElement.isPredicate()) {
 							NPA.add(upPred);
+							System.out.println("NPA:  " + upPred);
 						} else {
 							predElement.transform();
 						}
 						if (!predElement.isVisited()) {
-							
+
 							worklist.push(predElement);
 						}
 					} else if (dispatcher.isCall(upPred)) {
@@ -89,6 +96,7 @@ public class ComputeNPA {
 								methodPlus = upPredPred.getMethodPlus();
 							}
 							CS.push(methodPlus);
+							System.out.println("Pushed Methods: "+methodPlus);
 							UnitPlus exitnode = dispatcher
 									.getExitUnitPlus(methodPlus);
 							UnitPlus entrynode = dispatcher
@@ -96,25 +104,22 @@ public class ComputeNPA {
 							outgoingState = mapAtCall(presentState, upPred,
 									exitnode);
 							analyzeMethod(exitnode, outgoingState);
-							CS.pop();
+							methodPlus = CS.pop();
+							System.out.println("Poped Methods: "+methodPlus);
+							System.out.println(upPred);
 							outgoingState = mapAtEntryOfMethod(presentState,
 									entrynode, upPred);
 							summary.setInformation(methodPlus, presentState,
 									outgoingState);
 						}
+						System.out.println(predElement.isVisited());
+						System.out.println(worklist.isEmpty());
 						if (!predElement.isVisited())
 							worklist.push(predElement);
-					} else if (dispatcher.isEntry(upPred)) {
-						List<UnitPlus> callSites = dispatcher
-								.getAllCallSites(upPred);
-						for (UnitPlus callSite : callSites) {
-							State outgoingState = mapAtEntryOfMethod(state,
-									unitPlus, callSite);
-							analyzeMethod(callSite, outgoingState);
-						}
-						if (!predElement.isVisited())
-							worklist.push(predElement);
-					}else{
+						System.out.println(worklist.isEmpty());
+					}
+					else
+						if (!dispatcher.isEntry(upPred)) {
 						if (!predElement.isVisited())
 							worklist.push(predElement);
 					}
@@ -122,16 +127,15 @@ public class ComputeNPA {
 
 			}
 		}
-		// What does this part do?
-		// if (CS.size() == 0) {
-		// List<UnitPlus> callSites = dispatcher.getAllCallSites(unitPlus);
-		// for (UnitPlus callSite : callSites) {
-		// State outgoingState = mapAtEntryOfMethod(state, unitPlus,
-		// callSite);
-		// analyzeMethod(callSite, outgoingState);
-		// }
-		// }
-		// What does this part do?
+		if (CS.size() == 0 && indexOfStackTrace < stackTrace.length -1
+				&& unitPlus != null) {
+			indexOfStackTrace++;
+			UnitPlus callSite = dispatcher.getStackTraceCallSiteOfMethod(
+					unitPlus.getMethodPlus(), stackTrace, indexOfStackTrace);
+			System.out.println("Number: "+indexOfStackTrace+"    Unitplus: "+unitPlus+"    CallSite:  " + callSite);
+			State outgoingState = mapAtEntryOfMethod(state, unitPlus, callSite);
+			analyzeMethod(callSite, outgoingState);
+		}
 	}
 
 	private State mapAtEntryOfMethod(State state, UnitPlus entrynode,

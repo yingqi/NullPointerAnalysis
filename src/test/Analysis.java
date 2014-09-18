@@ -4,6 +4,7 @@ import internal.MethodPlus;
 import internal.State;
 import internal.UnitPlus;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +119,7 @@ public class Analysis {
 		}
 		// Show all Nodes
 	}
-	public void doAnalysis(){
+	public void doAnalysis() throws ClassNotFoundException, FileNotFoundException{
 		//Need check!!!
 		dispatcher = new DispatcherFactory(this.completeCFG, this.stackTrace, methodToUnitGraph, sootMethods);
 		ComputeNPA computeNPA = new ComputeNPA(this);
@@ -144,6 +145,10 @@ public class Analysis {
 	} 
 	public  Map<UnitPlus, List<UnitPlus>> getCFG(){
 		return completeCFG;
+	}
+	
+	public StackTraceElement[] getStackTraceElements() {
+		return stackTrace;
 	}
 
 }

@@ -1,5 +1,7 @@
 package example;
 
+import java.io.FileNotFoundException;
+
 import test.Analysis;
 
 
@@ -7,7 +9,7 @@ public class ExampleWithException {
 	String string1, string2;
 	int val;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ClassNotFoundException, FileNotFoundException {
 		try {
 			ExampleWithException rTEExampleException = new ExampleWithException(args[0].length());
 			if (args.length == 1) {
@@ -47,7 +49,6 @@ public class ExampleWithException {
 	}
 
 	public void method2() {
-		
 		string1 = string2;
 	}
 
