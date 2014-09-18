@@ -71,7 +71,9 @@ public class ComputeNPA {
 						isElementCreated = true;
 					}
 				}
+//				System.out.println("isElementCreated: "+isElementCreated );
 				if (!isElementCreated) {
+					System.out.println("PredElement: "+presentElement);
 					Element predElement = new Element(upPred, presentState);
 					elementSet.add(predElement);
 					if (dispatcher.isTransform(upPred)) {
@@ -106,17 +108,19 @@ public class ComputeNPA {
 							analyzeMethod(exitnode, outgoingState);
 							methodPlus = CS.pop();
 							System.out.println("Poped Methods: "+methodPlus);
-							System.out.println(upPred);
+//							System.out.println(upPred);
 							outgoingState = mapAtEntryOfMethod(presentState,
 									entrynode, upPred);
+							predElement.setUnitPlus(dispatcher.getCallSitePred(upPred));
+//							System.out.println(outgoingState);
 							summary.setInformation(methodPlus, presentState,
 									outgoingState);
 						}
-						System.out.println(predElement.isVisited());
-						System.out.println(worklist.isEmpty());
+//						System.out.println(predElement.isVisited());
+//						System.out.println(worklist.isEmpty());
 						if (!predElement.isVisited())
 							worklist.push(predElement);
-						System.out.println(worklist.isEmpty());
+//						System.out.println(worklist.isEmpty());
 					}
 					else
 						if (!dispatcher.isEntry(upPred)) {

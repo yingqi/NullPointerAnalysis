@@ -243,31 +243,47 @@ public class DispatcherFactory implements Dispatcher {
 				.getEntryUnitPlus(methodPlus));
 		for (UnitPlus pred : preds) {
 			System.out.println("Pred: "+pred);
-			if (isLineInMethod(stackTraceElement.getLineNumber(), pred.getMethodPlus())) {
-				if (pred.getMethodPlus().getMethodName().equals(stackTraceElement.getMethodName())) {
-					callSite = pred;
+			List<Tag> tags =pred.getUnit().getTags();
+			for(Tag tag:tags){
+				if(tag instanceof LineNumberTag){
+					LineNumberTag lineNumberTag = (LineNumberTag) tag;
+					if(stackTraceElement.getLineNumber()==lineNumberTag.getLineNumber()){
+						callSite = pred;
+					}
 				}
 			}
 		}
 		return callSite;
 
 	}
-	
-	private boolean isLineInMethod(int lineNumber, MethodPlus methodPlus){
-		Chain<Unit> units = methodPlus.getSootmethod().retrieveActiveBody().getUnits();
-		int lowBound =Integer.MAX_VALUE, highBound = 0;
-		for(Unit unit:units){
-			List<Tag> tags = unit.getTags();
-			for(Tag  tag:tags){
-				if(tag instanceof LineNumberTag){
-					LineNumberTag lineNumberTag = (LineNumberTag) tag;
-					lowBound = Math.min(lineNumberTag.getLineNumber(), lowBound);
-					highBound = Math.max(lineNumberTag.getLineNumber(), highBound);
-				}
+
+	@Override
+	public UnitPlus getCallSitePred(UnitPlus callB) {
+		UnitPlus callA =null;
+		Set<UnitPlus> keys = completeCFG.keySet();
+		for(UnitPlus key:keys){
+			if(key.getAttribute().equals("a")&&key.getNumber()==callB.getNumber()){
+				callA = key;
 			}
 		}
-//		System.out.println("LineNumber: "+lineNumber+" LowBound: "+lowBound+" HighBound: "+highBound);
-		return lineNumber>=lowBound&&lineNumber<=highBound;
+		return callA;
 	}
+	
+//	private boolean isLineInMethod(int lineNumber, MethodPlus methodPlus){
+//		Chain<Unit> units = methodPlus.getSootmethod().retrieveActiveBody().getUnits();
+//		int lowBound =Integer.MAX_VALUE, highBound = 0;
+//		for(Unit unit:units){
+//			List<Tag> tags = unit.getTags();
+//			for(Tag  tag:tags){
+//				if(tag instanceof LineNumberTag){
+//					LineNumberTag lineNumberTag = (LineNumberTag) tag;
+//					lowBound = Math.min(lineNumberTag.getLineNumber(), lowBound);
+//					highBound = Math.max(lineNumberTag.getLineNumber(), highBound);
+//				}
+//			}
+//		}
+////		System.out.println("LineNumber: "+lineNumber+" LowBound: "+lowBound+" HighBound: "+highBound);
+//		return lineNumber>=lowBound&&lineNumber<=highBound;
+//	}
 
 }

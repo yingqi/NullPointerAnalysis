@@ -26,6 +26,9 @@ public class Element
 		this.state=state;
 		isVisited =false;
 	}
+	public void setUnitPlus(UnitPlus unitPlus){
+		this.unitPlus = unitPlus;
+	}
 	public UnitPlus getUnitPlus()
 	{
 		return unitPlus;

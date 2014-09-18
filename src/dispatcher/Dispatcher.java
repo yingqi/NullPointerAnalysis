@@ -147,5 +147,7 @@ public interface Dispatcher {
 	public Map<MethodPlus, UnitGraphPlus> getMethodToUnitGraphPlus();
 	
 	public List<UnitPlus> StackTraceElementToUnit(StackTraceElement[] stackTrace, int indexOfStackTrace);
+	
+	public UnitPlus getCallSitePred(UnitPlus callB);
 
 }
