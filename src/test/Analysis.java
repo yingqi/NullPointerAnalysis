@@ -128,7 +128,9 @@ public class Analysis {
 			if(errorUnit.getUnit() instanceof AbstractDefinitionStmt){
 				AbstractDefinitionStmt ads = (AbstractDefinitionStmt) errorUnit.getUnit();
 				Value possibleErrorValue = ads.getRightOp();
-					computeNPA.analyzeMethod(errorUnit, new State(possibleErrorValue));
+				List<State> errorStates = new ArrayList<>();
+				errorStates.add(new State(possibleErrorValue));
+					computeNPA.analyzeMethod(errorUnit, errorStates);
 			}
 		}
 		ArrayList<UnitPlus> NPA = computeNPA.getNPA();

@@ -1,30 +1,49 @@
 package internal;
 
+import java.util.List;
+
 public class Record {
-	public Record(MethodPlus methodPlus, State incomingState, State outgoingState){
+	public Record(MethodPlus methodPlus,List<State> incomingStates,List<State> outgoingStates){
 		this.methodPlus = methodPlus;
-		this.incomingState = incomingState;
-		this.outgoingState = outgoingState;
+		this.incomingStates = incomingStates;
+		this.outgoingStates = outgoingStates;
 	}
 	public boolean compareMethod(MethodPlus methodPlus) {
+		//Why toString?
 		return methodPlus.toString().equals(methodPlus.toString());
 	}
 
-	public boolean compareIncomingState(State state) {
-		return incomingState.equals(state);
+	public boolean compareIncomingStates(List<State> states) {
+		boolean statesEquals =  incomingStates.size()==states.size();
+		if(statesEquals){
+			for(int i=0;i<states.size();i++){
+				if(!states.get(i).equals(incomingStates.get(i))){
+					statesEquals =false;
+				}
+			}
+		}
+		return statesEquals;
 	}
 
 	private MethodPlus methodPlus;
-	private State incomingState;
-	private State outgoingState;
+	private List<State> incomingStates;
+	private List<State> outgoingStates;
 
-	public State getOutgoingState() {
-		return outgoingState;
+	public List<State> getOutgoingStates() {
+		return outgoingStates;
 	}
 	
 	@Override
 	public String toString(){
-		return "Method: "+methodPlus+"\tIncommingState: "+incomingState+"\tOutGoingState: "+outgoingState;
+		String toString = "Method: "+methodPlus+"\tIncommingStates: ";
+		for(State state:incomingStates){
+			toString+=state;
+		}
+		toString+="\tOutgoingStates: ";
+		for(State state:outgoingStates){
+			toString+=state;
+		}
+		return toString;
 	}
 	
 	@Override
@@ -33,7 +52,16 @@ public class Record {
 			return false;
 		}else {
 			Record record = (Record) object;
-			return this.getIncomingState().equals(record.getIncomingState())&&this.getOutgoingState().equals(record.getOutgoingState())&&this.getMethodPlus().equals(record.getMethodPlus());
+			boolean equals =  this.compareIncomingStates(record.getIncomingStates())&&this.getMethodPlus().equals(record.getMethodPlus());
+			equals =  outgoingStates.size()==record.getOutgoingStates().size();
+			if(equals){
+				for(int i=0;i<outgoingStates.size();i++){
+					if(!outgoingStates.get(i).equals(incomingStates.get(i))){
+						equals =false;
+					}
+				}
+			}
+			return equals;
 		}
 	}
 	public MethodPlus getMethodPlus() {
@@ -42,13 +70,13 @@ public class Record {
 	public void setMethodPlus(MethodPlus methodPlus) {
 		this.methodPlus = methodPlus;
 	}
-	public State getIncomingState() {
-		return incomingState;
+	public List<State>  getIncomingStates() {
+		return incomingStates;
 	}
-	public void setIncomingState(State incomingState) {
-		this.incomingState = incomingState;
+	public void setIncomingStates(List<State> incomingStates) {
+		this.incomingStates = incomingStates;
 	}
-	public void setOutgoingState(State outgoingState) {
-		this.outgoingState = outgoingState;
+	public void setOutgoingStates(List<State>  outgoingStates) {
+		this.outgoingStates = outgoingStates;
 	}
 }

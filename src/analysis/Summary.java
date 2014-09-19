@@ -20,22 +20,22 @@ public class Summary {
 	public Summary(){
 		information = new ArrayList<>();
 	}
-	public State getInformation(Element element)
+	public List<State> getInformation(Element element)
 	{
-		State incomingState=element.getState();	
+		List<State> incomingStates=element.getStates();	
 		MethodPlus methodPlus = element.getUnitPlus().getMethodPlus();
 		for(Record record:information)
 		{
-			if(record.compareMethod(methodPlus)&&record.compareIncomingState(incomingState))
+			if(record.compareMethod(methodPlus)&&record.compareIncomingStates(incomingStates))
 			{
-				return record.getOutgoingState();
+				return record.getOutgoingStates();
 			}
 		}
 		return null;
 	}
-	public void setInformation(MethodPlus methodPlus,State incomingState,State outgoingState)
+	public void setInformation(MethodPlus methodPlus,List<State> incomingStates,List<State> outgoingStates)
 	{	
-		information.add(new Record(methodPlus,incomingState,outgoingState));
+		information.add(new Record(methodPlus,incomingStates,outgoingStates));
 	}
 	
 	private List<Record> information;

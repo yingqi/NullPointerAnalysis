@@ -39,6 +39,7 @@ public class ComputeNPA {
 	private Set<Element> elementSet;
 	private int indexOfStackTrace;
 	private StackTraceElement[] stackTrace;
+	private List<State> transitStates;
 
 	public ComputeNPA(Analysis analysis) {
 		NPA = new ArrayList<>();
@@ -51,140 +52,173 @@ public class ComputeNPA {
 		stackTrace = analysis.getStackTraceElements();
 	}
 
-	public void analyzeMethod(UnitPlus unitPlus, State state)
+	public void analyzeMethod(UnitPlus unitPlus, List<State> states)
 			throws ClassNotFoundException, FileNotFoundException {
 		Stack<Element> worklist = new Stack<Element>();
-		Element initializeElement = new Element(unitPlus, state);
+		Element initializeElement = new Element(unitPlus, states);
 		elementSet.add(initializeElement);
 		worklist.push(initializeElement);
 		while (!worklist.isEmpty() && (unitPlus != null)) {
 			Element presentElement = worklist.pop();
+			System.out.println("presentElement: " + presentElement);
 			presentElement.setVisited();
 			List<UnitPlus> preds = dispatcher.getPredecessors(presentElement
 					.getUnitPlus());
 			for (UnitPlus upPred : preds) {
-				State presentState = presentElement.getState();
+				List<State> presentStates = presentElement.getStates();
 				boolean isElementCreated = false;
 				for (Element element : elementSet) {
 					if (element.getUnitPlus().equals(upPred)
-							&& element.getState().equals(presentState)) {
+							&& element.getStates().equals(presentStates)) {
 						isElementCreated = true;
 					}
 				}
-//				System.out.println("isElementCreated: "+isElementCreated );
+				// System.out.println("isElementCreated: "+isElementCreated );
 				if (!isElementCreated) {
-					System.out.println("PredElement: "+presentElement);
-					Element predElement = new Element(upPred, presentState);
+					Element predElement = new Element(upPred, presentStates);
 					elementSet.add(predElement);
 					if (dispatcher.isTransform(upPred)) {
-
+						Element newElement = predElement;
 						if (predElement.isPredicate()) {
 							NPA.add(upPred);
 							System.out.println("NPA:  " + upPred);
 						} else {
-							predElement.transform();
+							newElement = predElement.transform();
 						}
 						if (!predElement.isVisited()) {
 
-							worklist.push(predElement);
+							worklist.push(newElement);
 						}
 					} else if (dispatcher.isCall(upPred)) {
-						State outgoingState = summary
+						List<State> outgoingStates = summary
 								.getInformation(predElement);
-						if (outgoingState == null) {
+						if (outgoingStates == null) {
 							MethodPlus methodPlus = null;
 							for (UnitPlus upPredPred : dispatcher
 									.getPredecessors(upPred)) {
 								methodPlus = upPredPred.getMethodPlus();
 							}
 							CS.push(methodPlus);
-							System.out.println("Pushed Methods: "+methodPlus);
+							System.out.println("Pushed Methods: " + methodPlus);
 							UnitPlus exitnode = dispatcher
 									.getExitUnitPlus(methodPlus);
 							UnitPlus entrynode = dispatcher
 									.getEntryUnitPlus(methodPlus);
-							outgoingState = mapAtCall(presentState, upPred,
+							outgoingStates = mapAtCall(presentStates, upPred,
 									exitnode);
-							analyzeMethod(exitnode, outgoingState);
+							transitStates = outgoingStates;
+							analyzeMethod(exitnode, outgoingStates);
 							methodPlus = CS.pop();
-							System.out.println("Poped Methods: "+methodPlus);
-//							System.out.println(upPred);
-							outgoingState = mapAtEntryOfMethod(presentState,
+							System.out.println("Poped Methods: " + methodPlus);
+							// System.out.println(upPred);
+							// System.out.println(transitStates.get(0));
+							presentStates = transitStates;
+							outgoingStates = mapAtEntryOfMethod(presentStates,
 									entrynode, upPred);
-							predElement.setUnitPlus(dispatcher.getCallSitePred(upPred));
-//							System.out.println(outgoingState);
-							summary.setInformation(methodPlus, presentState,
-									outgoingState);
+							predElement.setUnitPlus(dispatcher
+									.getCallSitePred(upPred));
+							System.out.println(outgoingStates.get(0));
+							summary.setInformation(methodPlus, presentStates,
+									outgoingStates);
 						}
-//						System.out.println(predElement.isVisited());
-//						System.out.println(worklist.isEmpty());
+						// System.out.println(predElement.isVisited());
+						// System.out.println(worklist.isEmpty());
+						if (!predElement.isVisited()){
+							predElement.setStates(outgoingStates);
+							worklist.push(predElement);						
+						}
+
+						// System.out.println(worklist.isEmpty());
+					} else if (!dispatcher.isEntry(upPred)) {
 						if (!predElement.isVisited())
 							worklist.push(predElement);
-//						System.out.println(worklist.isEmpty());
-					}
-					else
-						if (!dispatcher.isEntry(upPred)) {
-						if (!predElement.isVisited())
-							worklist.push(predElement);
+					} else if (dispatcher.isEntry(upPred) && !CS.isEmpty()) {
+						transitStates = presentStates;
+						System.out.println("Transit: " + transitStates.get(0));
 					}
 				}
 
 			}
 		}
-		if (CS.size() == 0 && indexOfStackTrace < stackTrace.length -1
+		if (CS.size() == 0 && indexOfStackTrace < stackTrace.length - 1
 				&& unitPlus != null) {
 			indexOfStackTrace++;
 			UnitPlus callSite = dispatcher.getStackTraceCallSiteOfMethod(
 					unitPlus.getMethodPlus(), stackTrace, indexOfStackTrace);
-			System.out.println("Number: "+indexOfStackTrace+"    Unitplus: "+unitPlus+"    CallSite:  " + callSite);
-			State outgoingState = mapAtEntryOfMethod(state, unitPlus, callSite);
-			analyzeMethod(callSite, outgoingState);
+			System.out.println("Number: " + indexOfStackTrace
+					+ "    Unitplus: " + unitPlus + "    CallSite:  "
+					+ callSite);
+			List<State> outgoingStates = mapAtEntryOfMethod(states, unitPlus,
+					callSite);
+			analyzeMethod(callSite, outgoingStates);
 		}
 	}
 
-	private State mapAtEntryOfMethod(State state, UnitPlus entrynode,
-			UnitPlus upPred) {
-		int numberOfParameters = entrynode.getMethodPlus().getSootmethod()
+	private List<State> mapAtEntryOfMethod(List<State> states,
+			UnitPlus entrynode, UnitPlus upPred) {
+		int totalOflocals = entrynode.getMethodPlus().getSootmethod()
 				.getParameterCount();
-		int i = 0;
+		Map<Integer, Integer> localsToStates = new HashMap<>();
 		boolean callInvolvesState = false;
-		for (; i < numberOfParameters; i++) {
+		for (int numberOflocals = 0; numberOflocals < totalOflocals; numberOflocals++) {
 			Value localValue = (Value) entrynode.getMethodPlus()
-					.getSootmethod().retrieveActiveBody().getParameterLocal(i);
-			if (state.getValue().equals(localValue)) {
-				callInvolvesState = true;
-				break;
+					.getSootmethod().retrieveActiveBody()
+					.getParameterLocal(numberOflocals);
+			for (int numberOfStates = 0; numberOfStates < states.size(); numberOfStates++) {
+				if (states.get(numberOfStates).equals(localValue)) {
+					localsToStates.put(new Integer(numberOflocals),
+							new Integer(numberOfStates));
+					callInvolvesState = true;
+				}
 			}
 		}
 		if (callInvolvesState) {
 			JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
+			// How the useBoxes Lies
 			List<ValueBox> useValueBoxs = jInvokeStmt.getUseBoxes();
-			Value value = useValueBoxs.get(i).getValue();
-			state.replaceValue(value);
+			Set<Integer> keys = localsToStates.keySet();
+			for (Integer localNumber : keys) {
+				Value value = useValueBoxs.get(localNumber.intValue())
+						.getValue();
+				states.get(localsToStates.get(localNumber)).replaceValue(value);
+			}
 		}
-		return state;
+		return states;
 	}
 
-	private State mapAtCall(State state, UnitPlus upPred, UnitPlus exitnode) {
+	private List<State> mapAtCall(List<State> states, UnitPlus upPred,
+			UnitPlus exitnode) {
 		MethodPlus calledMethodPlus = exitnode.getMethodPlus();
 		JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
 		List<ValueBox> useValueBoxs = jInvokeStmt.getUseBoxes();
 		boolean callInvolvesState = false;
-		int count = 0;
-		for (ValueBox valueBox : useValueBoxs) {
-			if (valueBox.getValue().equals(state.getValue())) {
-				callInvolvesState = true;
-				break;
+		Map<Integer, Integer> parametersToStates = new HashMap<>();
+		int totalOfUsedValues = useValueBoxs.size();
+		for (int numberOfUsedValues = 0; numberOfUsedValues < totalOfUsedValues; numberOfUsedValues++) {
+			Value parameterValue = useValueBoxs.get(numberOfUsedValues)
+					.getValue();
+			for (int numberOfStates = 0; numberOfStates < states.size(); numberOfStates++) {
+				if (states.get(numberOfStates).equals(parameterValue)) {
+					parametersToStates.put(new Integer(numberOfUsedValues),
+							new Integer(numberOfStates));
+					callInvolvesState = true;
+				}
 			}
-			count++;
 		}
+
 		if (callInvolvesState) {
 			System.out.println("callInvolvesState:     " + jInvokeStmt);
 			Body body = calledMethodPlus.getSootmethod().retrieveActiveBody();
-			Value parameterValue = (Value) body.getParameterLocal(count);
-			state.replaceValue(parameterValue);
+			Set<Integer> parameterKeys = parametersToStates.keySet();
+			for (Integer parameterNumber : parameterKeys) {
+				Value parameterValue = (Value) body
+						.getParameterLocal(parameterNumber);
+				states.get(parametersToStates.get(parameterNumber))
+						.replaceValue(parameterValue);
+			}
+
 		}
-		return state;
+		return states;
 	}
 
 	public ArrayList<UnitPlus> getNPA() {

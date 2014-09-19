@@ -35,7 +35,7 @@ public class ExampleWithException {
 		string1 = null;
 		string2 = null;
 		if (val > 1) {
-//			string2 = new String("abc");
+			string2 = new String("abc");
 		}
 	}
 
