@@ -37,6 +37,34 @@ public class Analysis {
 	private List<SootMethod> sootMethods;
 
 	public Analysis(StackTraceElement[] stackTrace){
+		analysisOneClass(stackTrace);
+	}
+	
+	public void analysisOneClass(StackTraceElement[] stackTrace){
+		StackTraceElement ste = stackTrace[0];
+		classNameString = ste.getClassName();
+		sootClassPath=System.getProperty("user.dir")+"\\bin";;
+		phaseOption1 = "jpt";
+		phaseOption2 = "use-original-names:true";
+		this.sootMethods = new ArrayList<>();
+		Options.v().set_allow_phantom_refs(true);
+		Options.v().set_app(true);
+		Options.v().set_whole_program(true);
+		Options.v().set_keep_line_number(true);
+		Options.v().set_soot_classpath(sootClassPath);
+		Options.v().setPhaseOption(phaseOption1, phaseOption2);
+
+		SootClass sootclass = Scene.v().loadClassAndSupport(classNameString);
+		Scene.v().loadNecessaryClasses();
+
+		CreateCompleteCFG completeCFG = new CreateCompleteCFG(sootclass, classNameString);
+		this.sootMethods = sootclass.getMethods();
+		this.stackTrace = stackTrace;
+		this.completeCFG = completeCFG.createCFG();
+		this.methodToUnitGraph = completeCFG.getMethodToUnitGraph();
+	}
+	
+	public void  AnalysisMultipleClasses(StackTraceElement[] stackTrace){
 		StackTraceElement ste = stackTrace[0];
 		classNameString = ste.getClassName();
 		sootClassPath=System.getProperty("user.dir")+"\\bin";;
