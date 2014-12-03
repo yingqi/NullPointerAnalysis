@@ -2,17 +2,41 @@ package internal;
 
 import java.util.List;
 
+/**
+ * Record is an internal class for whether the method is visited record.
+ * @author leo
+ *
+ */
 public class Record {
+	
+	/**
+	 * constructor
+	 * @param methodPlus
+	 * @param incomingStates
+	 * @param outgoingStates
+	 */
 	public Record(MethodPlus methodPlus,List<State> incomingStates,List<State> outgoingStates){
 		this.methodPlus = methodPlus;
 		this.incomingStates = incomingStates;
 		this.outgoingStates = outgoingStates;
 	}
+	
+	/**
+	 * compare method whether they are the same
+	 * @param methodPlus
+	 * @return
+	 */
 	public boolean compareMethod(MethodPlus methodPlus) {
-		//Why toString?
+		//Q3: Why toString?
+		//Assume: connected with sootmethod
 		return methodPlus.toString().equals(methodPlus.toString());
 	}
 
+	/**
+	 * compare states 
+	 * @param states
+	 * @return
+	 */
 	public boolean compareIncomingStates(List<State> states) {
 		boolean statesEquals =  incomingStates.size()==states.size();
 		if(statesEquals){
@@ -64,6 +88,7 @@ public class Record {
 			return equals;
 		}
 	}
+	
 	public MethodPlus getMethodPlus() {
 		return methodPlus;
 	}

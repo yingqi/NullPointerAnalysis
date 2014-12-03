@@ -1,6 +1,8 @@
 package example;
 
+import java.beans.PropertyChangeEvent;
 import java.io.FileNotFoundException;
+import java.util.Properties;
 
 import test.Analysis;
 
@@ -24,9 +26,9 @@ public class ExampleWithException {
 			 e.printStackTrace();
 			 System.out.println("************");
 			 System.out.println(e.getStackTrace()[0]);
-			 Analysis analysis = new Analysis(e.getStackTrace());
+			 Analysis analysis = new Analysis(e.getStackTrace(), "bin");
 			 analysis.showCFG();
-			 analysis.doAnalysis();
+			 analysis.doAnalysis(e.getStackTrace());
 		}
 	}
 

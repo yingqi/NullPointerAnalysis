@@ -29,20 +29,20 @@ public interface Dispatcher {
 	 */
 	public List<UnitPlus> getPredecessors(UnitPlus unitPlus);
 
-	/**
-	 * gets the call site based on the stack trace There are two choices. If the
-	 * method overload is considered, then the first element of the list is the
-	 * calling method. The second choice is to get all the methods which share
-	 * the same name of the calling method.
-	 * 
-	 * @param unit
-	 * @param stackTrace
-	 * @return
-	 * @throws ClassNotFoundException 
-	 * @throws FileNotFoundException 
-	 */
-	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException;
+//	/**
+//	 * gets the call site based on the stack trace There are two choices. If the
+//	 * method overload is considered, then the first element of the list is the
+//	 * calling method. The second choice is to get all the methods which share
+//	 * the same name of the calling method.
+//	 * 
+//	 * @param unit
+//	 * @param stackTrace
+//	 * @return
+//	 * @throws ClassNotFoundException 
+//	 * @throws FileNotFoundException 
+//	 */
+//	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
+//			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException;
 	
 	/**
 	 * gets the call site based on the stack trace There are two choices. If the
@@ -59,32 +59,32 @@ public interface Dispatcher {
 	public UnitPlus getStackTraceCallSiteOfMethod(MethodPlus methodPlus,
 			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException;
 	
-	/**
-	 * gets all the call sites based on the stack trace
-	 * @param unit
-	 * @param stackTrace
-	 * @return
-	 * @throws ClassNotFoundException 
-	 * @throws FileNotFoundException 
-	 */
-	public List<UnitPlus> getStackTraceCallSites(UnitPlus unitPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException;
-
-	/**
-	 * gets all the call sites
-	 * 
-	 * @param unit
-	 * @return
-	 */
-	public List<UnitPlus> getAllCallSites(UnitPlus unitPlus);
+//	/**
+//	 * gets all the call sites based on the stack trace
+//	 * @param unit
+//	 * @param stackTrace
+//	 * @return
+//	 * @throws ClassNotFoundException 
+//	 * @throws FileNotFoundException 
+//	 */
+//	public List<UnitPlus> getStackTraceCallSites(UnitPlus unitPlus,
+//			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException;
+//
+//	/**
+//	 * gets all the call sites
+//	 * 
+//	 * @param unit
+//	 * @return
+//	 */
+//	public List<UnitPlus> getAllCallSites(UnitPlus unitPlus);
 	
-	/**
-	 * gets all the call sites
-	 * 
-	 * @param unit
-	 * @return
-	 */
-	public List<UnitPlus> getAllCallSitesOfMethod(MethodPlus methodPlus);
+//	/**
+//	 * gets all the call sites
+//	 * 
+//	 * @param unit
+//	 * @return
+//	 */
+//	public List<UnitPlus> getAllCallSitesOfMethod(MethodPlus methodPlus);
 
 	/**
 	 * gets the exit units of a method
@@ -136,18 +136,33 @@ public interface Dispatcher {
 	 */
 	public boolean isTransform(UnitPlus unitPlus);
 
+//	/**
+//	 * map the definition value to the use value. return the last use value.
+//	 * 
+//	 * @param defValue
+//	 * @return
+//	 */
+//	public Value valueMap(Value defValue, UnitPlus unitPlus);
+	
 	/**
-	 * map the definition value to the use value. return the last use value.
-	 * 
-	 * @param defValue
+	 * get relationship between method plus and unit graph plus
 	 * @return
 	 */
-	public Value valueMap(Value defValue, UnitPlus unitPlus);
-	
 	public Map<MethodPlus, UnitGraphPlus> getMethodToUnitGraphPlus();
 	
+	/**
+	 * get relationship between stack trace element and unit
+	 * @param stackTrace
+	 * @param indexOfStackTrace
+	 * @return
+	 */
 	public List<UnitPlus> StackTraceElementToUnit(StackTraceElement[] stackTrace, int indexOfStackTrace);
 	
+	/**
+	 * get caller a for assigned caller b
+	 * @param callB
+	 * @return
+	 */
 	public UnitPlus getCallSitePred(UnitPlus callB);
 
 }

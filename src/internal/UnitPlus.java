@@ -4,7 +4,11 @@ package internal;
 
 import soot.Unit;
 
-
+/**
+ * comprehensive version of unit
+ * @author leo
+ *
+ */
 public class UnitPlus {
 	private Integer numberInteger;
 	private String attributeString;

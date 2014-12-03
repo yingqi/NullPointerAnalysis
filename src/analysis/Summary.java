@@ -17,9 +17,19 @@ import java.util.List;
  *
  */
 public class Summary {
+	
+	/**
+	 * constructor
+	 */
 	public Summary(){
 		information = new ArrayList<>();
 	}
+	
+	/**
+	 * get information
+	 * @param element
+	 * @return
+	 */
 	public List<State> getInformation(Element element)
 	{
 		List<State> incomingStates=element.getStates();	
@@ -33,6 +43,13 @@ public class Summary {
 		}
 		return null;
 	}
+	
+	/**
+	 * set information
+	 * @param methodPlus
+	 * @param incomingStates
+	 * @param outgoingStates
+	 */
 	public void setInformation(MethodPlus methodPlus,List<State> incomingStates,List<State> outgoingStates)
 	{	
 		information.add(new Record(methodPlus,incomingStates,outgoingStates));

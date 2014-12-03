@@ -17,7 +17,9 @@ import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
+import soot.jimple.InvokeExpr;
 import soot.jimple.internal.AbstractDefinitionStmt;
+import soot.jimple.internal.AbstractInvokeExpr;
 import soot.jimple.internal.BeginStmt;
 import soot.jimple.internal.JInvokeStmt;
 import soot.tagkit.LineNumberTag;
@@ -35,8 +37,8 @@ import soot.util.Chain;
 public class DispatcherFactory implements Dispatcher {
 	private Map<UnitPlus, List<UnitPlus>> completeCFG;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
-	private boolean isDistinguishedOverload;
-	private List<SootMethod> sootMethods;
+//	private boolean isDistinguishedOverload;
+//	private List<SootMethod> sootMethods;
 
 	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,
 			StackTraceElement[] stackTrace,
@@ -44,9 +46,8 @@ public class DispatcherFactory implements Dispatcher {
 			List<SootMethod> sootMethods) {
 		this.completeCFG = completeCFG;
 		this.methodToUnitGraph = methodToUnitGraph;
-		isDistinguishedOverload = true;
-		this.sootMethods = new ArrayList<>();
-		this.sootMethods = sootMethods;
+//		isDistinguishedOverload = true;
+//		this.sootMethods = sootMethods;
 	}
 
 	@Override
@@ -67,52 +68,52 @@ public class DispatcherFactory implements Dispatcher {
 		return preds;
 	}
 
-	@Override
-	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace)
-			throws ClassNotFoundException, FileNotFoundException {
-		UnitPlus callSite = null;
-		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
-		String methodName = stackTraceElement.getMethodName();
-		List<UnitPlus> preds = this.getPredecessors(unitPlus);
-		for (UnitPlus pred : preds) {
-			if (isDistinguishedOverload) {
-				if (pred.getMethodPlus().getMethodName().equals(methodName)) {
-					callSite = pred;
-				}
-			}
-		}
-		return callSite;
-	}
+//	@Override
+//	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
+//			StackTraceElement[] stackTrace, int indexOfStackTrace)
+//			throws ClassNotFoundException, FileNotFoundException {
+//		UnitPlus callSite = null;
+//		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
+//		String methodName = stackTraceElement.getMethodName();
+//		List<UnitPlus> preds = this.getPredecessors(unitPlus);
+//		for (UnitPlus pred : preds) {
+//			if (isDistinguishedOverload) {
+//				if (pred.getMethodPlus().getMethodName().equals(methodName)) {
+//					callSite = pred;
+//				}
+//			}
+//		}
+//		return callSite;
+//	}
+//
+//	@Override
+//	public List<UnitPlus> getStackTraceCallSites(UnitPlus unitPlus,
+//			StackTraceElement[] stackTrace, int indexOfStackTrace)
+//			throws ClassNotFoundException, FileNotFoundException {
+//		List<UnitPlus> sTCallSites = new ArrayList<>();
+//		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
+//		String methodName = stackTraceElement.getMethodName();
+//		List<UnitPlus> callSites = this.getPredecessors(unitPlus);
+//		for (UnitPlus pred : callSites) {
+//			if (pred.getMethodPlus().getMethodName().equals(methodName)) {
+//				sTCallSites.add(pred);
+//			}
+//		}
+//		return sTCallSites;
+//	}
 
-	@Override
-	public List<UnitPlus> getStackTraceCallSites(UnitPlus unitPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace)
-			throws ClassNotFoundException, FileNotFoundException {
-		List<UnitPlus> sTCallSites = new ArrayList<>();
-		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
-		String methodName = stackTraceElement.getMethodName();
-		List<UnitPlus> callSites = this.getPredecessors(unitPlus);
-		for (UnitPlus pred : callSites) {
-			if (pred.getMethodPlus().getMethodName().equals(methodName)) {
-				sTCallSites.add(pred);
-			}
-		}
-		return sTCallSites;
-	}
-
-	@Override
-	public List<UnitPlus> getAllCallSites(UnitPlus unitPlus) {
-		List<UnitPlus> allCallSites = this.getPredecessors(unitPlus);
-		for (UnitPlus upPred : allCallSites) {
-			if (!(upPred.getUnit() instanceof JInvokeStmt)) {
-				System.out.println("The Units are not call sites!");
-				System.out.println(upPred);
-				allCallSites = null;
-			}
-		}
-		return allCallSites;
-	}
+//	@Override
+//	public List<UnitPlus> getAllCallSites(UnitPlus unitPlus) {
+//		List<UnitPlus> allCallSites = this.getPredecessors(unitPlus);
+//		for (UnitPlus upPred : allCallSites) {
+//			if (!(upPred.getUnit() instanceof JInvokeStmt)) {
+//				System.out.println("The Units are not call sites!");
+//				System.out.println(upPred);
+//				allCallSites = null;
+//			}
+//		}
+//		return allCallSites;
+//	}
 
 	@Override
 	public UnitPlus getExitUnitPlus(MethodPlus Method) {
@@ -157,12 +158,12 @@ public class DispatcherFactory implements Dispatcher {
 		return unitPlus.isCall();
 	}
 
-	@Override
-	public Value valueMap(Value defValue, UnitPlus unitPlus) {
-		List<ValueBox> useValueBoxs = unitPlus.getUnit().getUseBoxes();
-		ValueBox useValueBox = useValueBoxs.get(useValueBoxs.size() - 1);
-		return useValueBox.getValue();
-	}
+//	@Override
+//	public Value valueMap(Value defValue, UnitPlus unitPlus) {
+//		List<ValueBox> useValueBoxs = unitPlus.getUnit().getUseBoxes();
+//		ValueBox useValueBox = useValueBoxs.get(useValueBoxs.size() - 1);
+//		return useValueBox.getValue();
+//	}
 
 	@Override
 	public List<UnitPlus> StackTraceElementToUnit(
@@ -170,12 +171,10 @@ public class DispatcherFactory implements Dispatcher {
 		List<UnitPlus> units = new ArrayList<>();
 		StackTraceElement ste = stackTrace[indexOfStackTrace];
 		String methodName = ste.getMethodName();
+		String classname = ste.getClassName();
+//		String fileName = ste.getFileName();
 		int lineNumber = ste.getLineNumber();
-		for (SootMethod sootMethod : sootMethods) {
-			if (sootMethod.getName().equals(methodName)) {
-				units.addAll(lineNumberToUnit(sootMethod, lineNumber));
-			}
-		}
+		units.addAll(lineNumberToUnit(methodName, classname, lineNumber));
 		for (UnitPlus unitPlus : units) {
 			String methodString = String.format("%-30s", unitPlus
 					.getMethodPlus().toString());
@@ -186,37 +185,99 @@ public class DispatcherFactory implements Dispatcher {
 		return units;
 	}
 
-	private List<UnitPlus> lineNumberToUnit(SootMethod sootMethod,
+	/**
+	 * Transfer line number to its units
+	 * @param sootMethod
+	 * @param lineNumber
+	 * @return
+	 */
+	private List<UnitPlus> lineNumberToUnit(String methodName, String className, 
 			int lineNumber) {
 		List<UnitPlus> units = new ArrayList<>();
-		Body body = sootMethod.retrieveActiveBody();
-		PatchingChain<Unit> unitPatchingChain = body.getUnits();
-		for (Unit unit : unitPatchingChain) {
+		Set<UnitPlus> unitPluses = completeCFG.keySet();
+		for (UnitPlus unitPlus : unitPluses) {
+			Unit unit = unitPlus.getUnit();
 			List<Tag> tags = unit.getTags();
 			for (Tag tag : tags) {
 				if (tag instanceof LineNumberTag) {
 					LineNumberTag lineNumberTag = (LineNumberTag) tag;
-					if (lineNumber == lineNumberTag.getLineNumber()) {
-						Set<UnitPlus> unitPluses = completeCFG.keySet();
-						boolean unitCounted = false;
-						for (UnitPlus unitPlus : unitPluses) {
-							if (!unitCounted && unit.equals(unitPlus.getUnit())) {
-								unitCounted = true;
-								units.add(unitPlus);
-							}
-						}
+					if (lineNumber == lineNumberTag.getLineNumber()
+							&&unitPlus.getMethodPlus().getclassName().equals(className)
+							&&unitPlus.getMethodPlus().getMethodName().equals(methodName)
+							//to ensure that caller a and caller b is not reviewed twice
+							&&!unitPlus.getAttribute().equals("a")) {
+						units.add(unitPlus);
 					}
 				}
 			}
 		}
+		
 		return units;
 	}
+	
+	
+//	public List<UnitPlus> StackTraceElementToUnit(
+//			StackTraceElement[] stackTrace, int indexOfStackTrace) {
+//		List<UnitPlus> units = new ArrayList<>();
+//		StackTraceElement ste = stackTrace[indexOfStackTrace];
+//		String methodName = ste.getMethodName();
+//		int lineNumber = ste.getLineNumber();
+//		for (SootMethod sootMethod : sootMethods) {
+//			if (sootMethod.getName().equals(methodName)) {
+//				units.addAll(lineNumberToUnit(sootMethod, lineNumber));
+//			}
+//		}
+//		for (UnitPlus unitPlus : units) {
+//			String methodString = String.format("%-30s", unitPlus
+//					.getMethodPlus().toString());
+//			System.out.println("StackTraceElementToUnit" + '\t'
+//					+ unitPlus.getNumber() + '\t' + methodString
+//					+ unitPlus.getUnit().toString());
+//		}
+//		return units;
+//	}
+//	
+//	private List<UnitPlus> lineNumberToUnit(SootMethod sootMethod,
+//			int lineNumber) {
+//		List<UnitPlus> units = new ArrayList<>();
+//		Body body = sootMethod.retrieveActiveBody();
+//		PatchingChain<Unit> unitPatchingChain = body.getUnits();
+//		//for all units
+//		for (Unit unit : unitPatchingChain) {
+//			List<Tag> tags = unit.getTags();
+//			for (Tag tag : tags) {
+//				if (tag instanceof LineNumberTag) {
+//					LineNumberTag lineNumberTag = (LineNumberTag) tag;
+//					if (lineNumber == lineNumberTag.getLineNumber()) {
+//						Set<UnitPlus> unitPluses = completeCFG.keySet();
+//						boolean unitCounted = false;
+//						//for all unit plus
+//						for (UnitPlus unitPlus : unitPluses) {
+//							if (!unitCounted && unit.equals(unitPlus.getUnit())) {
+//								unitCounted = true;
+//								units.add(unitPlus);
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//		return units;
+//	}
+	
+	
 
 	@Override
 	public boolean isTransform(UnitPlus unitPlus) {
 		boolean isTransform = false;
 		if (unitPlus.getUnit() instanceof AbstractDefinitionStmt) {
 			isTransform = true;
+			AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) unitPlus.getUnit();
+			Value rightValue = abstractDefinitionStmt.getRightOp();
+			// if right value is invoke expression, it is still not valued as definition statement
+			if(rightValue instanceof InvokeExpr){
+				isTransform = false;
+			}
 		}
 		return isTransform;
 	}
@@ -226,10 +287,10 @@ public class DispatcherFactory implements Dispatcher {
 		return methodToUnitGraph;
 	}
 
-	@Override
-	public List<UnitPlus> getAllCallSitesOfMethod(MethodPlus methodPlus) {
-		return this.getAllCallSites(this.getEntryUnitPlus(methodPlus));
-	}
+//	@Override
+//	public List<UnitPlus> getAllCallSitesOfMethod(MethodPlus methodPlus) {
+//		return this.getAllCallSites(this.getEntryUnitPlus(methodPlus));
+//	}
 
 	@Override
 	public UnitPlus getStackTraceCallSiteOfMethod(MethodPlus methodPlus,
@@ -237,10 +298,12 @@ public class DispatcherFactory implements Dispatcher {
 			throws ClassNotFoundException, FileNotFoundException {
 		UnitPlus callSite = null;
 		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
+		// get all call sites of this method
 		List<UnitPlus> preds = this.getPredecessors(this
 				.getEntryUnitPlus(methodPlus));
 		System.out.println("Entry: "+this
 				.getEntryUnitPlus(methodPlus));
+		// check which call site fit the stack trace
 		for (UnitPlus pred : preds) {
 			System.out.println("Pred: "+pred);
 			List<Tag> tags =pred.getUnit().getTags();
@@ -269,21 +332,4 @@ public class DispatcherFactory implements Dispatcher {
 		return callA;
 	}
 	
-//	private boolean isLineInMethod(int lineNumber, MethodPlus methodPlus){
-//		Chain<Unit> units = methodPlus.getSootmethod().retrieveActiveBody().getUnits();
-//		int lowBound =Integer.MAX_VALUE, highBound = 0;
-//		for(Unit unit:units){
-//			List<Tag> tags = unit.getTags();
-//			for(Tag  tag:tags){
-//				if(tag instanceof LineNumberTag){
-//					LineNumberTag lineNumberTag = (LineNumberTag) tag;
-//					lowBound = Math.min(lineNumberTag.getLineNumber(), lowBound);
-//					highBound = Math.max(lineNumberTag.getLineNumber(), highBound);
-//				}
-//			}
-//		}
-////		System.out.println("LineNumber: "+lineNumber+" LowBound: "+lowBound+" HighBound: "+highBound);
-//		return lineNumber>=lowBound&&lineNumber<=highBound;
-//	}
-
 }

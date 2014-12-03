@@ -18,6 +18,7 @@ public class MethodPlus {
 	private List<Type> parameterSootTypes;
 	private String className;
 	private SootMethod sootMethod;
+	//Q4: can sootmethod abandoned?
 
 	/**
 	 * initiate method
@@ -66,7 +67,7 @@ public class MethodPlus {
 
 	@Override
 	public String toString() {
-		String methodString = methodName;
+		String methodString =className+"."+ methodName;
 		for (Type parameterSootType : parameterSootTypes) {
 			methodString =methodString + '\t' + parameterSootType.toString();
 		}
@@ -79,7 +80,7 @@ public class MethodPlus {
 			return false;
 		}else {
 			MethodPlus methodPlus = (MethodPlus) object;
-			return this.getSootmethod().equals(methodPlus.getSootmethod());
+			return this.getSootmethod().equals(methodPlus.getSootmethod())&&this.className.equals(methodPlus.className);
 		}
 	}
 }
