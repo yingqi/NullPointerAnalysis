@@ -1,10 +1,14 @@
 package internal;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import soot.Body;
+import soot.Local;
 import soot.SootMethod;
 import soot.Type;
+import soot.util.Chain;
 
 /**
  * class MethodPlus is a class represents method which is compatible with both
@@ -17,7 +21,9 @@ public class MethodPlus {
 	private String methodName;
 	private List<Type> parameterSootTypes;
 	private String className;
-	private SootMethod sootMethod;
+	private List<Local> parameterLocals;
+	private int parameterCount;
+//	private SootMethod sootMethod;
 	//Q4: can sootmethod abandoned?
 
 	/**
@@ -27,12 +33,14 @@ public class MethodPlus {
 	 * @param parameterSootTypes
 	 */
 	public MethodPlus(String methodName, String className,
-			List<Type> parameterSootTypes, SootMethod sootMethod) {
+			List<Type> parameterSootTypes,List<Local> parameterLocals, int parameterCount) {
 		this.methodName = methodName;
 		this.className = className;
 		this.parameterSootTypes = parameterSootTypes;
-		this.sootMethod = sootMethod;
+		this.parameterLocals = parameterLocals;
+		this.parameterCount = parameterCount;
 	}
+	
 
 	/**
 	 * get method name.
@@ -61,15 +69,27 @@ public class MethodPlus {
 		return parameterSootTypes;
 	}
 	
-	public SootMethod getSootmethod(){
-		return sootMethod;
+//	public SootMethod getSootmethod(){
+//		return sootMethod;
+//	}
+	
+	public List<Local> getParameterLocals(){
+		return parameterLocals;
+	}
+	
+	public int getParameterCount(){
+		return parameterCount;
+	}
+	
+	public Local getParameterLocal(int i){
+		return parameterLocals.get(i);
 	}
 
 	@Override
 	public String toString() {
 		String methodString =className+"."+ methodName;
 		for (Type parameterSootType : parameterSootTypes) {
-			methodString =methodString + '\t' + parameterSootType.toString();
+			methodString += '\t' + parameterSootType.toString();
 		}
 		return methodString;
 	}
@@ -80,7 +100,23 @@ public class MethodPlus {
 			return false;
 		}else {
 			MethodPlus methodPlus = (MethodPlus) object;
-			return this.getSootmethod().equals(methodPlus.getSootmethod())&&this.className.equals(methodPlus.className);
+			return equalTypes(methodPlus.getParameterSootTypes())&&this.className.equals(methodPlus.className)&&this.methodName.equals(methodPlus.getMethodName());
 		}
+	}
+	
+	public boolean euqalTo(SootMethod sootMethod){
+		return equalTypes(sootMethod.getParameterTypes())&&this.methodName.equals(sootMethod.getName());
+	}
+	
+	private boolean equalTypes(List<Type> parameterSootTypes){
+		boolean equalTypes = this.parameterSootTypes.size()==parameterSootTypes.size();
+		if(equalTypes){
+			for(int i =0;i<parameterSootTypes.size();i++){
+				if(!this.parameterSootTypes.get(i).toString().equals(parameterSootTypes.get(i).toString())){
+					equalTypes = false;
+				}
+			}
+		}
+		return equalTypes;
 	}
 }

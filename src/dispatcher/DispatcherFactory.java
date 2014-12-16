@@ -21,6 +21,7 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.internal.AbstractDefinitionStmt;
 import soot.jimple.internal.AbstractInvokeExpr;
 import soot.jimple.internal.BeginStmt;
+import soot.jimple.internal.EndStmt;
 import soot.jimple.internal.JInvokeStmt;
 import soot.tagkit.LineNumberTag;
 import soot.tagkit.Tag;
@@ -42,8 +43,7 @@ public class DispatcherFactory implements Dispatcher {
 
 	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,
 			StackTraceElement[] stackTrace,
-			Map<MethodPlus, UnitGraphPlus> methodToUnitGraph,
-			List<SootMethod> sootMethods) {
+			Map<MethodPlus, UnitGraphPlus> methodToUnitGraph) {
 		this.completeCFG = completeCFG;
 		this.methodToUnitGraph = methodToUnitGraph;
 //		isDistinguishedOverload = true;
@@ -175,13 +175,13 @@ public class DispatcherFactory implements Dispatcher {
 //		String fileName = ste.getFileName();
 		int lineNumber = ste.getLineNumber();
 		units.addAll(lineNumberToUnit(methodName, classname, lineNumber));
-		for (UnitPlus unitPlus : units) {
-			String methodString = String.format("%-30s", unitPlus
-					.getMethodPlus().toString());
-			System.out.println("StackTraceElementToUnit" + '\t'
-					+ unitPlus.getNumber() + '\t' + methodString
-					+ unitPlus.getUnit().toString());
-		}
+//		for (UnitPlus unitPlus : units) {
+//			String methodString = String.format("%-30s", unitPlus
+//					.getMethodPlus().toString());
+//			System.out.println("StackTraceElementToUnit" + '\t'
+//					+ unitPlus.getNumber() + '\t' + methodString
+//					+ unitPlus.getUnit().toString());
+//		}
 		return units;
 	}
 
@@ -298,18 +298,20 @@ public class DispatcherFactory implements Dispatcher {
 			throws ClassNotFoundException, FileNotFoundException {
 		UnitPlus callSite = null;
 		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
+//		System.out.println("stackTraceElement: "+stackTraceElement);
 		// get all call sites of this method
 		List<UnitPlus> preds = this.getPredecessors(this
 				.getEntryUnitPlus(methodPlus));
-		System.out.println("Entry: "+this
-				.getEntryUnitPlus(methodPlus));
+//		System.out.println("Entry: "+this
+//				.getEntryUnitPlus(methodPlus));
 		// check which call site fit the stack trace
 		for (UnitPlus pred : preds) {
-			System.out.println("Pred: "+pred);
+//			System.out.println("Call Site Pred: "+pred);
 			List<Tag> tags =pred.getUnit().getTags();
 			for(Tag tag:tags){
 				if(tag instanceof LineNumberTag){
 					LineNumberTag lineNumberTag = (LineNumberTag) tag;
+//					System.out.println("LineNumber: "+lineNumberTag.getLineNumber());
 					if(stackTraceElement.getLineNumber()==lineNumberTag.getLineNumber()){
 						callSite = pred;
 					}
@@ -330,6 +332,15 @@ public class DispatcherFactory implements Dispatcher {
 			}
 		}
 		return callA;
+	}
+
+	@Override
+	public boolean isTailOfMethod(UnitPlus unitPlus) {
+		boolean isTail = false;
+		if (unitPlus.getUnit() instanceof EndStmt) {
+			isTail =true;
+		}
+		return isTail;
 	}
 	
 }

@@ -164,5 +164,12 @@ public interface Dispatcher {
 	 * @return
 	 */
 	public UnitPlus getCallSitePred(UnitPlus callB);
+	
+	/**
+	 * To determine whether the unitplus is the tail of a method
+	 * @param unitPlus
+	 * @return
+	 */
+	public boolean isTailOfMethod(UnitPlus unitPlus);
 
 }

@@ -16,6 +16,7 @@ import soot.Value;
 import soot.ValueBox;
 import soot.coffi.parameter_annotation;
 import soot.jimple.InvokeExpr;
+import soot.jimple.ParameterRef;
 import soot.jimple.ReturnStmt;
 import soot.jimple.internal.AbstractDefinitionStmt;
 import soot.jimple.internal.AbstractInvokeExpr;
@@ -30,7 +31,7 @@ import dispatcher.Dispatcher;
 /**
  * @version 2014-08-06
  * @author Lind, Yingqi
- *
+ * 
  */
 public class ComputeNPA {
 
@@ -46,6 +47,7 @@ public class ComputeNPA {
 
 	/**
 	 * constructor
+	 * 
 	 * @param dispatcher
 	 * @param stackTrace
 	 */
@@ -69,6 +71,7 @@ public class ComputeNPA {
 
 	/**
 	 * analyze the method
+	 * 
 	 * @param unitPlus
 	 * @param states
 	 * @throws ClassNotFoundException
@@ -88,135 +91,161 @@ public class ComputeNPA {
 			tempStates = presentElement.getStates();
 			System.out.println("presentElement: " + presentElement);
 			presentElement.setVisited();
-			List<UnitPlus> preds = dispatcher.getPredecessors(presentElement
-					.getUnitPlus());
-			for (UnitPlus upPred : preds) {
-				List<State> presentStates = presentElement.getStates();
-				// to avoid one element visited twice which is caused by create same elements twice
-				boolean isElementCreated = false;
-				for (Element element : elementSet) {
-					if (element.getUnitPlus().equals(upPred)
-							&& element.getStates().equals(presentStates)) {
-						isElementCreated = true;
+			if (dispatcher.isCall(presentElement.getUnitPlus())) {
+				worklist.push(new Element(dispatcher
+						.getCallSitePred(presentElement.getUnitPlus()),
+						presentElement.getStates()));
+			} else {
+				List<UnitPlus> preds = dispatcher
+						.getPredecessors(presentElement.getUnitPlus());
+				for (UnitPlus upPred : preds) {
+					List<State> presentStates = presentElement.getStates();
+					// to avoid one element visited twice which is caused by
+					// create
+					// same elements twice
+					boolean isElementCreated = false;
+					for (Element element : elementSet) {
+						if (element.getUnitPlus().equals(upPred)
+								&& element.getStates().equals(presentStates)) {
+							isElementCreated = true;
+						}
 					}
-				}
-				
-				if (!isElementCreated) {
-					Element predElement = new Element(upPred, presentStates);
-					elementSet.add(predElement);
-					// if the element is definition statement
-					if (dispatcher.isTransform(upPred)) {
-						Element newElement = predElement;
-						if (predElement.isPredicate()) {
-							NPA.add(upPred);
-							System.out.println("NPA:  " + upPred);
-						} 
-						// if it is only a transform element
-						else {
-							predElement.transform();
+
+					if (!isElementCreated) {
+						Element predElement = new Element(upPred, presentStates);
+						elementSet.add(predElement);
+						// if the element is definition statement
+						if (dispatcher.isTransform(upPred)) {
+							Element newElement = predElement;
+							if (predElement.isPredicate()) {
+								NPA.add(upPred);
+								// System.out.println("NPA:  " + upPred);
+							}
+							// if it is only a transform element
+							else {
+								predElement.transform();
+								if (!predElement.isVisited()) {
+									worklist.push(predElement);
+								}
+							}
+						} else if (dispatcher.isCall(upPred)) {
+							List<State> outgoingStates = summary
+									.getInformation(predElement);
+							if (outgoingStates == null) {
+								MethodPlus methodPlus = null;
+								for (UnitPlus upPredPred : dispatcher
+										.getPredecessors(upPred)) {
+									// upPred is a caller b so it has only one
+									// predecessor
+									methodPlus = upPredPred.getMethodPlus();
+									CS.push(methodPlus);
+									// System.out.println("Pushed Methods: " +
+									// methodPlus);
+									UnitPlus exitnode = dispatcher
+											.getExitUnitPlus(methodPlus);
+									UnitPlus entrynode = dispatcher
+											.getEntryUnitPlus(methodPlus);
+									outgoingStates = mapAtCall(presentStates,
+											upPred, exitnode);
+									// states before going into a deeper method
+									transitStates = outgoingStates;
+									Element exitElement = new Element(exitnode,
+											outgoingStates);
+									analyzeMethod(exitElement);
+									methodPlus = CS.pop();
+									// System.out.println("Poped Methods: " +
+									// methodPlus);
+									// System.out.println(upPred);
+									// System.out.println(transitStates.get(0));
+									presentStates = transitStates;
+									outgoingStates = mapAtEntryOfMethod(
+											presentStates, entrynode, upPred);
+									// after analyze the call method, the
+									// predElement changes to the caller a
+									predElement.setUnitPlus(dispatcher
+											.getCallSitePred(upPred));
+									summary.setInformation(methodPlus,
+											presentStates, outgoingStates);
+								}
+							} else {
+								System.out.println("Analyzed Method: "
+										+ predElement);
+							}
+							// set the predElement
+							// if method has not been analyzed, then the
+							// outgoing
+							// states are the new analyzed states
+							// if the method has been analyzed, then the
+							// outgoing
+							// states are the states in the summary
+							if (!predElement.isVisited()&&!outgoingStates.isEmpty()) {
+								predElement.setStates(outgoingStates);
+								worklist.push(predElement);
+							}
+						}
+						// if upPred is a normal statement push it and go on
+						else if (!dispatcher.isEntry(upPred)) {
+							if (upPred.getUnit() instanceof ReturnStmt) {
+								ReturnStmt returnStmt = (ReturnStmt) upPred
+										.getUnit();
+								Value returnValue = returnStmt.getOp();
+								for (State state : presentStates) {
+									if (state.getAttribute().equals(
+											"return value")) {
+										if (returnValue.toString().equals(
+												"null")) {
+											// System.out.println("NPA:  " +
+											// upPred);
+											NPA.add(upPred);
+										}
+										// it not null, add them to states
+										else {
+											state.replaceValue(returnValue,
+													upPred.getMethodPlus());
+										}
+									}
+								}
+							}
 							if (!predElement.isVisited()) {
 								worklist.push(predElement);
 							}
-						}
-					} else if (dispatcher.isCall(upPred)) {
-						List<State> outgoingStates = summary
-								.getInformation(predElement);
-						if (outgoingStates == null) {
-							MethodPlus methodPlus = null;
-							for (UnitPlus upPredPred : dispatcher
-									.getPredecessors(upPred)) {
-								// upPred is a caller b so it has only one predecessor
-								methodPlus = upPredPred.getMethodPlus();
-								CS.push(methodPlus);
-								System.out.println("Pushed Methods: " + methodPlus);
-								UnitPlus exitnode = dispatcher
-										.getExitUnitPlus(methodPlus);
-								UnitPlus entrynode = dispatcher
-										.getEntryUnitPlus(methodPlus);
-								outgoingStates = mapAtCall(presentStates, upPred,
-										exitnode);
-								// states before going into a deeper method
-								transitStates = outgoingStates;
-								Element exitElement = new Element(exitnode, outgoingStates);
-								analyzeMethod(exitElement);
-								methodPlus = CS.pop();
-								System.out.println("Poped Methods: " + methodPlus);
-								// System.out.println(upPred);
-//								System.out.println(transitStates.get(0));
-								presentStates = transitStates;
-								outgoingStates = mapAtEntryOfMethod(presentStates,
-										entrynode, upPred);
-								//after analyze the call method, the predElement changes to the caller a 
-								predElement.setUnitPlus(dispatcher.getCallSitePred(upPred));
-								summary.setInformation(methodPlus, presentStates,
-										outgoingStates);
-							}
-						}
-						// set the predElement 
-						// if method has not been analyzed, then the outgoing states are the new analyzed states
-						// if the method has been analyzed, then the outgoing states are the states in the summary
-						if (!predElement.isVisited()) {
-							predElement.setStates(outgoingStates);
-							worklist.push(predElement);
-						}
-					} 				
-					//if upPred is a normal statement push it and go on
-					else if (!dispatcher.isEntry(upPred)) {
-						if (upPred.getUnit() instanceof ReturnStmt){
-							ReturnStmt returnStmt = (ReturnStmt) upPred.getUnit();
-							Value returnValue = returnStmt.getOp();
-							for(State state:presentStates){
-								if(state.getAttribute().equals("return value")){
-									if (returnValue.toString().equals("null")) {
-										System.out.println("NPA:  " + upPred);
-										NPA.add(upPred);
-									}
-									// it not null, add them to states
-									else {
-										state.replaceValue(returnValue);
-										if (!predElement.isVisited()){
-											worklist.push(predElement);
-										}
-									}
-									
-								}
-							}
-						}else{
-							if (!predElement.isVisited()){
-								worklist.push(predElement);
-							}
-						}
-					}
-					// if it is the entry of method and CS is not empty,
-					// it means that it needs to go to upper method and 
-					// the states need to be preserved and that is where
-					// we need the transitStates
-					else if (dispatcher.isEntry(upPred) && !CS.isEmpty()) {
-						if(isFirstTimeVisitedEntry){
-							transitStates = presentStates;
-							isFirstTimeVisitedEntry =false;
-							System.out.println("Transit: " + transitStates.size());
-						}else {
-							transitStates.addAll(presentStates);
-							System.out.println("NotFirstTime Transit: " + transitStates.size());
-						}
-					}
-				}
 
+						}
+						// if it is the entry of method and CS is not empty,
+						// it means that it needs to go to upper method and
+						// the states need to be preserved and that is where
+						// we need the transitStates
+						else if (dispatcher.isEntry(upPred) && !CS.isEmpty()) {
+							if (isFirstTimeVisitedEntry) {
+								transitStates = presentStates;
+								isFirstTimeVisitedEntry = false;
+								System.out.println("Transit: "
+										+ transitStates.size());
+							} else {
+								transitStates.addAll(presentStates);
+								System.out.println("NotFirstTime Transit: "
+										+ transitStates.size());
+							}
+						}
+					}
+
+				}
 			}
 		}
-		System.out.println("worklist is empty");
-		// if work list and CS are all empty, we need to find the caller site of this method
+		// System.out.println("worklist is empty");
+		// if work list and CS are all empty, we need to find the caller site of
+		// this method
 		// with the help of stack trace
 		if (CS.size() == 0 && indexOfStackTrace < stackTrace.length - 1
-//				&& initializeElement.getUnitPlus() != null
-				) {
+		// && initializeElement.getUnitPlus() != null
+		) {
 			indexOfStackTrace++;
 			UnitPlus callSite = dispatcher.getStackTraceCallSiteOfMethod(
-					initializeElement.getUnitPlus().getMethodPlus(), stackTrace, indexOfStackTrace);
-			System.out.println("Number: " + indexOfStackTrace
-					+ "    Unitplus: " + initializeElement.getUnitPlus() + "    CallSite:  "
-					+ callSite);
+					initializeElement.getUnitPlus().getMethodPlus(),
+					stackTrace, indexOfStackTrace);
+			System.out.println("NumberOfCallSite: " + indexOfStackTrace
+					+ "    Unitplus: " + initializeElement.getUnitPlus()
+					+ "    CallSite:  " + callSite);
 			List<State> outgoingStates = mapAtEntryOfMethod(tempStates,
 					initializeElement.getUnitPlus(), callSite);
 			Element callElement = new Element(callSite, outgoingStates);
@@ -226,6 +255,7 @@ public class ComputeNPA {
 
 	/**
 	 * map the states at the entry of a method
+	 * 
 	 * @param states
 	 * @param entrynode
 	 * @param upPred
@@ -234,35 +264,108 @@ public class ComputeNPA {
 	private List<State> mapAtEntryOfMethod(List<State> states,
 			UnitPlus entrynode, UnitPlus upPred) {
 		// map all the local values in states to the used values in the unit
-		// the invoke expression case does not need to worry as when mapped back,
-		// the return value is the real value of the left value in the upper method
-		int totalOflocals = entrynode.getMethodPlus().getSootmethod()
-				.getParameterCount();
-		Map<Integer, Integer> localsToStates = new HashMap<>();
-		boolean callInvolvesState = false;
-		for (int numberOflocals = 0; numberOflocals < totalOflocals; numberOflocals++) {
-			Value localValue = (Value) entrynode.getMethodPlus()
-					.getSootmethod().retrieveActiveBody()
-					.getParameterLocal(numberOflocals);
-			for (int numberOfStates = 0; numberOfStates < states.size(); numberOfStates++) {
-				if (states.get(numberOfStates).getValue().toString().equals(localValue.toString())) {
-//					System.out.println("Value Equals!!!111");
-					localsToStates.put(new Integer(numberOflocals),
-							new Integer(numberOfStates));
-					callInvolvesState = true;
+		// the invoke expression case does not need to worry as when mapped
+		// back,
+		// the return value is the real value of the left value in the upper
+		// method
+//		int parameterCount = entrynode.getMethodPlus().getParameterCount();
+//		System.out.println("parameterCount: " + entrynode.getMethodPlus()
+//				+ parameterCount);
+//		Map<Integer, Integer> localsToStates = new HashMap<>();
+//		boolean callInvolvesState = false;
+//		// for local values in the method
+//		for (int numberOflocals = 0; numberOflocals < parameterCount; numberOflocals++) {
+//			Value localValue = (Value) entrynode.getMethodPlus()
+//					.getParameterLocal(numberOflocals);
+//			
+//			System.out.println("local value: " + localValue);
+//			for (int numberOfStates = 0; numberOfStates < states.size(); numberOfStates++) {
+//				if (states.get(numberOfStates).getValue().toString()
+//						.equals(localValue.toString())) {
+//					// System.out.println("Value Equals!!!111");
+//					localsToStates.put(new Integer(numberOflocals),
+//							new Integer(numberOfStates));
+//					callInvolvesState = true;
+//				}
+//			}
+//		}
+//		if (callInvolvesState) {
+//			if (upPred.getUnit() instanceof JInvokeStmt) {
+//				JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
+//				// How the useBoxes Lies
+//				List<ValueBox> useValueBoxs = jInvokeStmt.getUseBoxes();
+//				Set<Integer> keys = localsToStates.keySet();
+//				for (Integer localNumber : keys) {
+//					Value value = useValueBoxs.get(localNumber.intValue())
+//							.getValue();
+//					if (value.toString().equals("null")) {
+//						NPA.add(upPred);
+//					} else {
+//						System.out.println("ParameterValue: " + value);
+//						states.get(localsToStates.get(localNumber))
+//								.replaceValue(value, upPred.getMethodPlus());
+//					}
+//				}
+//			} else if (upPred.getUnit() instanceof AbstractDefinitionStmt) {
+//				AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) upPred
+//						.getUnit();
+//				Value rightValue = abstractDefinitionStmt.getRightOp();
+//				if (rightValue instanceof InvokeExpr) {
+//					InvokeExpr invokeExpr = (InvokeExpr) rightValue;
+//					List<Value> args = invokeExpr.getArgs();
+//					Set<Integer> keys = localsToStates.keySet();
+//					for (Integer localNumber : keys) {
+//						Value value = args.get(localNumber.intValue());
+//						if (value.toString().equals("null")) {
+//							NPA.add(upPred);
+//						} else {
+//							System.out.println("ParameterValue: " + value);
+//							states.get(localsToStates.get(localNumber))
+//									.replaceValue(value, upPred.getMethodPlus());
+//						}
+//					}
+//				}
+//			} else {
+//				System.out.println("Error not invoke statement or expression!");
+//			}
+//
+//		}
+		List<State> removeStates = new ArrayList<>();
+		for(State state:states){
+			if(state.getValue() instanceof ParameterRef){
+				ParameterRef parameterRef = (ParameterRef) state.getValue();
+				int index = parameterRef.getIndex();
+				if (index>=0&&upPred.getUnit() instanceof JInvokeStmt) {
+					JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
+					InvokeExpr invokeExpr = jInvokeStmt.getInvokeExpr();
+					List<Value> args = invokeExpr.getArgs();
+					if(args.get(index).toString().equals("null")){
+						NPA.add(upPred);
+						removeStates.add(state);
+					}else {
+						state.replaceValue(args.get(index), upPred.getMethodPlus());
+						}
+					} 
+				else if (index>=0&&upPred.getUnit() instanceof AbstractDefinitionStmt) {
+					AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) upPred
+							.getUnit();
+					Value rightValue = abstractDefinitionStmt.getRightOp();
+					if (rightValue instanceof InvokeExpr) {
+						InvokeExpr invokeExpr = (InvokeExpr) rightValue;
+						List<Value> args = invokeExpr.getArgs();
+						if(args.get(index).toString().equals("null")){
+							NPA.add(upPred);
+							states.remove(state);
+						}else {
+						state.replaceValue(args.get(index),
+								upPred.getMethodPlus());
+						}
+					}
 				}
 			}
 		}
-		if (callInvolvesState) {
-			JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
-			// How the useBoxes Lies
-			List<ValueBox> useValueBoxs = jInvokeStmt.getUseBoxes();
-			Set<Integer> keys = localsToStates.keySet();
-			for (Integer localNumber : keys) {
-				Value value = useValueBoxs.get(localNumber.intValue())
-						.getValue();
-				states.get(localsToStates.get(localNumber)).replaceValue(value);
-			}
+		for(State state:removeStates){
+			states.remove(state);
 		}
 		return states;
 	}
@@ -273,82 +376,35 @@ public class ComputeNPA {
 		if (upPred.getUnit() instanceof JInvokeStmt) {
 			MethodPlus calledMethodPlus = exitnode.getMethodPlus();
 			JInvokeStmt jInvokeStmt = (JInvokeStmt) upPred.getUnit();
-			List<ValueBox> useValueBoxs = jInvokeStmt.getUseBoxes();
-			boolean callInvolvesState = false;
-			Map<Integer, Integer> parametersToStates = new HashMap<>();
-			int totalOfUsedValues = useValueBoxs.size();
-			for (int numberOfUsedValues = 0; numberOfUsedValues < totalOfUsedValues; numberOfUsedValues++) {
-				Value parameterValue = useValueBoxs.get(numberOfUsedValues)
-						.getValue();
-				for (int numberOfStates = 0; numberOfStates < states.size(); numberOfStates++) {
-					if (states.get(numberOfStates).getValue().toString()
-							.equals(parameterValue.toString())) {
-						System.out.println("Value Equals!!!222");
-						parametersToStates.put(new Integer(numberOfUsedValues),
-								new Integer(numberOfStates));
-						callInvolvesState = true;
+			List<Value> args = jInvokeStmt.getInvokeExpr().getArgs();
+			for(State state:states){
+				for(Value arg:args){
+					if(state.getValue().equals(arg)){
+						state.replaceValue(arg, calledMethodPlus);
 					}
 				}
 			}
-
-			if (callInvolvesState) {
-				System.out.println("callInvolvesState:     " + jInvokeStmt);
-				Body body = calledMethodPlus.getSootmethod()
-						.retrieveActiveBody();
-				Set<Integer> parameterKeys = parametersToStates.keySet();
-				for (Integer parameterNumber : parameterKeys) {
-					Value parameterValue = (Value) body
-							.getParameterLocal(parameterNumber);
-					states.get(parametersToStates.get(parameterNumber))
-							.replaceValue(parameterValue);
-				}
-
-			}
-		} 
-		// if the unit is definition statement and right value is invoke expression
+		}
+		// if the unit is definition statement and right value is invoke
+		// expression
 		else if (upPred.getUnit() instanceof AbstractDefinitionStmt) {
 			AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) upPred
 					.getUnit();
 			Value rightValue = abstractDefinitionStmt.getRightOp();
 			Value leftValue = abstractDefinitionStmt.getLeftOp();
 			if (rightValue instanceof InvokeExpr) {
-				
 				// check if used values in the invoke experssion are states
 				MethodPlus calledMethodPlus = exitnode.getMethodPlus();
 				InvokeExpr invokeExpr = (InvokeExpr) rightValue;
-				List<ValueBox> useValueBoxs = invokeExpr.getUseBoxes();
-				boolean callInvolvesState = false;
-				Map<Integer, Integer> parametersToStates = new HashMap<>();
-				int totalOfUsedValues = useValueBoxs.size();
-				for (int numberOfUsedValues = 0; numberOfUsedValues < totalOfUsedValues; numberOfUsedValues++) {
-					Value parameterValue = useValueBoxs.get(numberOfUsedValues)
-							.getValue();
-					for (int numberOfStates = 0; numberOfStates < states.size(); numberOfStates++) {
-						if (states.get(numberOfStates).getValue().toString()
-								.equals(parameterValue.toString())) {
-							parametersToStates.put(new Integer(numberOfUsedValues),
-									new Integer(numberOfStates));
-							callInvolvesState = true;
+				List<Value> args = invokeExpr.getArgs();
+				for(State state:states){
+					for(Value arg:args){
+						if(state.getValue().equals(arg)){
+							state.replaceValue(arg, calledMethodPlus);
 						}
 					}
 				}
-
-				if (callInvolvesState) {
-					System.out.println("callInvolvesState:     " + invokeExpr);
-					Body body = calledMethodPlus.getSootmethod()
-							.retrieveActiveBody();
-					Set<Integer> parameterKeys = parametersToStates.keySet();
-					for (Integer parameterNumber : parameterKeys) {
-						Value parameterValue = (Value) body
-								.getParameterLocal(parameterNumber);
-						states.get(parametersToStates.get(parameterNumber))
-								.replaceValue(parameterValue);
-					}
-
-				}
-				
-				
-				// check if the return values which are left values are states				
+				// check if the return values which are left values are states
 				List<UnitPlus> returnUnitPlusList = dispatcher
 						.getPredecessors(exitnode);
 				for (UnitPlus returnUnitPlus : returnUnitPlusList) {
@@ -358,14 +414,16 @@ public class ComputeNPA {
 						Value returnValue = returnStmt.getOp();
 						for (int numberOfStates = 0; numberOfStates < states
 								.size(); numberOfStates++) {
-							//if states and left values are the same
-							if (states.get(numberOfStates).getValue().toString()
-									.equals(leftValue.toString())) {
-								//Q2.5: compared to Q2, why here it is okay to get compare value without toString?
-								System.out.println("Value Equals!!!333"+states.get(numberOfStates));
-								// set the states as return value when hit the return statement, we can fix that
-								states.get(numberOfStates).setAttribute("return value");;
-								
+							// if states and left values are the same
+							if (states.get(numberOfStates).getValue()
+									.toString().equals(leftValue.toString())) {
+								// Q2.5: compared to Q2, why here it is okay to
+								// get compare value without toString?
+								// System.out.println("Value Equals!!!333"+states.get(numberOfStates));
+								// set the states as return value when hit the
+								// return statement, we can fix that
+								states.get(numberOfStates).setAttribute(
+										"return value");
 							}
 						}
 					}

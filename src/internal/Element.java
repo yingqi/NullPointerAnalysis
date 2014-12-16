@@ -6,6 +6,9 @@ import java.util.List;
 import java_cup.reduce_action;
 import soot.Value;
 import soot.ValueBox;
+import soot.jimple.InstanceFieldRef;
+import soot.jimple.InstanceInvokeExpr;
+import soot.jimple.InvokeExpr;
 import soot.jimple.internal.AbstractDefinitionStmt;
 
 /**
@@ -91,7 +94,16 @@ public class Element
 			for(State state:states){
 				if(leftValue.toString().equals(state.getValue().toString())){
 					// Q2: how to euqal these two better than toString?
-					State newState = new State(ads.getRightOp());
+					State newState = new State(ads.getRightOp(), unitPlus.getMethodPlus());
+					Value rightOp = ads.getRightOp();
+					// To fix the problem that c=a.b; c.A();//exception b!=null a==null 
+					if(rightOp instanceof InstanceInvokeExpr){
+						InstanceInvokeExpr instanceInvokeExpr = (InstanceInvokeExpr) rightOp;
+						newStates.add(new State(instanceInvokeExpr.getBase(), unitPlus.getMethodPlus()));
+					}else if(rightOp instanceof InstanceFieldRef){
+						InstanceFieldRef instanceFieldRef = (InstanceFieldRef) rightOp;
+						newStates.add(new State(instanceFieldRef.getBase(), unitPlus.getMethodPlus()));
+					}
 					newStates.add(newState);
 				}else{
 					newStates.add(state);

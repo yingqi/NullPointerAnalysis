@@ -3,6 +3,7 @@ package test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 
@@ -22,7 +23,20 @@ public class StartAnalysis {
 	 * @throws ClassNotFoundException
 	 */
 	public static void main(String[] args) throws FileNotFoundException, ClassNotFoundException{
-		File file = new File("output.txt");
+		List<String> sourceStrings = new ArrayList<>();
+
+		String fileString = "/home/leo/output.txt";
+		sourceStrings.add("/home/leo/RunTimeException/NPAException/bin");
+		// 0 stands for jar type, 1 stands for class type
+		
+//		String fileString = "/home/leo/jfc/bug.txt";
+//		sourceStrings.add("/home/leo/jfc/jfc");
+//		sourceStrings.add("/home/leo/jfc/jfreechart");
+//		sourceStrings.add("/home/leo/jfc/Bug2.class");
+		int fileType = 1;
+		
+		
+		File file = new File(fileString);
 		Scanner fileScanner = new Scanner(file);
 		ArrayList<StackTraceElement> stackTraceElements = new ArrayList<StackTraceElement>();
 		
@@ -43,8 +57,12 @@ public class StartAnalysis {
 					int index = 0;
 					//get package name
 					while((index+3)<specs.length){
-						packageName+=specs[index];
+						packageName+="."+specs[index];
 						index++;
+					}
+					//if package is default
+					if(packageName.length()!=0){
+						packageName = packageName.substring(1);
 					}
 					//get class name
 					className = specs[index];
@@ -62,7 +80,7 @@ public class StartAnalysis {
 					lineNumber = Integer.parseInt(specs[index+2].substring(indexOfLineNumber+1));
 					//get the file name
 					fileName = specs[index+1].substring(indexOfMethodEnd+1)+"."+specs[index+2].substring(0,indexOfLineNumber);
-//					System.out.println("Package: "+packageName+"\tClass: "+className+"\tMethod: "+methodName+"\tLineNumber: "+lineNumber+"\tFileName: "+fileName);
+					System.out.println("Package: "+packageName+"\tClass: "+className+"\tMethod: "+methodName+"\tLineNumber: "+lineNumber+"\tFileName: "+fileName);
 					//combine to get the class name
 					className = packageName+"."+className;
 					StackTraceElement ste = new StackTraceElement(className, methodName, fileName, lineNumber);
@@ -73,7 +91,7 @@ public class StartAnalysis {
 		}
 		StackTraceElement[] stackTrace = (StackTraceElement[]) stackTraceElements.toArray(new StackTraceElement[stackTraceElements.size()]);
 		fileScanner.close();
-		 Analysis analysis = new Analysis(stackTrace,"C:\\RunTimeException\\NPAException\\bin");
+		 Analysis analysis = new Analysis(stackTrace,sourceStrings,fileType);
 		 // create the CFG first and then do analysis
 		 analysis.showCFG();
 		 analysis.doAnalysis(stackTrace);

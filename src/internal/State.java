@@ -15,22 +15,26 @@ public class State
 {
 	private Value variable;
 	private String attribute;
+	private MethodPlus methodPlus;
 	
 	/**
 	 * constructor
 	 * @param initValue
 	 */
-	public State(Value initValue){
+	public State(Value initValue, MethodPlus methodPlus){
 		variable = initValue;
 		attribute = "";
+		this.methodPlus = methodPlus;
 	}
 	
 	/**
 	 * replace the value in a state
+	 * Remember to check NPA before we encounter replaceValue
 	 * @param value
 	 */
-	public void replaceValue(Value value){
+	public void replaceValue(Value value, MethodPlus methodPlus){
 		variable = value;
+		this.methodPlus = methodPlus;
 	}
 	
 	/**
@@ -41,9 +45,17 @@ public class State
 		return variable;
 	}
 	
+	/**
+	 * get the method
+	 * @return
+	 */
+	public MethodPlus getmethod(){
+		return methodPlus;
+	}
+	
 	@Override
 	public String toString(){
-		return variable.toString()+" "+attribute;
+		return methodPlus.toString()+"\tValue: "+variable.toString()+" "+attribute;
 	}
 	
 	@Override
@@ -53,7 +65,9 @@ public class State
 		}else {
 			State state = (State) object;
 			//same as Q2
-			return this.getValue().toString().equals(state.getValue().toString());
+			return this.getValue().toString().equals(state.getValue().toString())
+					&&this.getmethod().equals(state.getmethod())
+					;
 		}
 	}
 

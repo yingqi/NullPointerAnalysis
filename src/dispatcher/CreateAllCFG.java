@@ -12,12 +12,14 @@ import java.util.Map;
 import java.util.Set;
 
 import soot.Body;
+import soot.Local;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.InvokeExpr;
+import soot.jimple.Jimple;
 import soot.jimple.internal.AbstractDefinitionStmt;
 import soot.jimple.internal.JInvokeStmt;
 import soot.toolkits.graph.ExceptionalUnitGraphPlus;
@@ -67,22 +69,42 @@ public class CreateAllCFG {
 		// in the class level
 		for (SootClass sootclass : sootclasses) {
 			List<SootMethod> sootMethods = sootclass.getMethods();
+			sootclass.setApplicationClass();
+			System.out.println("Analyze class: "+sootclass.getName()+sootMethods.size());
 			// in the method level
 			for (SootMethod sootMethod : sootMethods) {
-				Body body = sootMethod.retrieveActiveBody();
-				UnitGraphPlus unitGraph = new ExceptionalUnitGraphPlus(body);
-				List<Type> parameterList = sootMethod.getParameterTypes();
-				MethodPlus methodPlus = new MethodPlus(sootMethod.getName(),
-						sootclass.getName(), parameterList, sootMethod);
-				Methods.add(methodPlus);
-				methodToUnitGraph.put(methodPlus, unitGraph);
-				this.createCFGsForMethod(unitGraph, methodPlus);
+				System.out.println("Analyze method: "+sootclass.getName()+"."+sootMethod.getName());
+				if(sootMethod.isConcrete()&&sootMethod.getSource()!=null
+						&&!sootMethod.isJavaLibraryMethod()
+//						&&!sootMethod.getName().equals("doMakeObject")
+//						&&(sootMethod.getName().equals("notifyVisit")
+//								||(sootMethod.getName().equals("visitToken")&&sootclass.getName().equals("com.puppycrawl.tools.checkstyle.checks.coding.FallThroughCheck")))
+						){
+					try {
+						Body body = sootMethod.retrieveActiveBody();
+						UnitGraphPlus unitGraph = new ExceptionalUnitGraphPlus(body);
+						List<Type> parameterList = sootMethod.getParameterTypes();
+						List<Local> parameterValues = new ArrayList<>();
+						for(int i=0;i<sootMethod.getParameterCount();i++){
+							parameterValues.add(body.getParameterLocal(i));
+						}
+						MethodPlus methodPlus = new MethodPlus(sootMethod.getName(),
+								sootclass.getName(), parameterList, parameterValues, sootMethod.getParameterCount());
+						Methods.add(methodPlus);
+						methodToUnitGraph.put(methodPlus, unitGraph);
+						this.createCFGsForMethod(unitGraph, methodPlus);
+					} catch (Exception e) {
+						System.out.println("Encounter exception: "+sootclass.getName()+"."+sootMethod.getName());
+						e.printStackTrace();
+					}					
+				}else {
+//					System.out.println("non-concrete method: "+sootclass.getName()+"."+sootMethod.getName());
+				}
 			}
-
 		}
+		System.out.println("Method analyzed!");
 		this.createCompleteCFG();
 		this.combineAllCFGs();
-
 		return completeCFG;
 	}
 
@@ -96,6 +118,7 @@ public class CreateAllCFG {
 		int index = UnitDirectory.size();
 		while (unitIterator.hasNext()) {
 			Unit unit = unitIterator.next();
+//			System.out.println(unit);
 			//if a unit is caller
 			if (unit instanceof JInvokeStmt) {
 				UnitPlus NodeA = new UnitPlus(index, "a", unit, Method);
@@ -177,7 +200,7 @@ public class CreateAllCFG {
 	 */
 	private boolean isCalledMethodAnalyzed(UnitPlus unitPlus) {
 		boolean isCalledMethodAnalyzed = false;
-		if (getMethodPlus(unitPlus) != null) {
+		if (getMethodPlus(unitPlus).size() != 0) {
 			isCalledMethodAnalyzed = true;
 		}
 		return isCalledMethodAnalyzed;
@@ -188,31 +211,34 @@ public class CreateAllCFG {
 	 * @param unitPlus
 	 * @return
 	 */
-	private MethodPlus getMethodPlus (UnitPlus unitPlus){
+	private List<MethodPlus> getMethodPlus (UnitPlus unitPlus){
+		List<MethodPlus> methodList = new ArrayList<>();
 		if (unitPlus.getUnit() instanceof JInvokeStmt) {
 			JInvokeStmt jInvokeStmt = (JInvokeStmt) unitPlus.getUnit();
 			SootMethod sootMethod = jInvokeStmt.getInvokeExpr().getMethod();
-			for(MethodPlus methodPlus:methodToUnitGraph.keySet()){
-				if (methodPlus.getSootmethod().equals(sootMethod)) {
-					return methodPlus;
-				}
-			}
+			methodList =  SootMethodAnalyzed(sootMethod);
 		}else if (unitPlus.getUnit() instanceof AbstractDefinitionStmt){
 			AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) unitPlus.getUnit();
 			Value rightValue = abstractDefinitionStmt.getRightOp();
 			if (rightValue instanceof InvokeExpr){
 				InvokeExpr invokeExpr = (InvokeExpr) rightValue;
 				SootMethod sootMethod = invokeExpr.getMethod();
-				for(MethodPlus methodPlus:methodToUnitGraph.keySet()){
-					if (methodPlus.getSootmethod().equals(sootMethod)) {
-						return methodPlus;
-					}
+				methodList =  SootMethodAnalyzed(sootMethod);
+			}	
+		}
+		return methodList;
+	}
+	
+	private List<MethodPlus> SootMethodAnalyzed(SootMethod sootMethod) {
+		List<MethodPlus> methodList = new ArrayList<>();
+		if (!sootMethod.isPhantom()) {
+			for (MethodPlus methodPlusTemp : methodToUnitGraph.keySet()) {
+				if (methodPlusTemp.euqalTo(sootMethod)) {
+					methodList.add(methodPlusTemp);
 				}
 			}
-			
 		}
-		
-		return null;
+		return methodList;
 	}
 
 	/**
@@ -249,30 +275,54 @@ public class CreateAllCFG {
 					// For method analyzed
 					if (ud.getAttribute().equals("a")) {
 						//for caller a, add caller a to method head's predecessors
-						UnitGraphPlus unitGraph = methodToUnitGraph.get(getMethodPlus(ud));
-						Unit head = unitGraph.getHead();
-						for (UnitPlus headUnitPlus : UnitDirectory) {
-							if (headUnitPlus.getUnit().equals(head)
-//									&& (!headUnitPlus.getAttribute().equals("b"))
-											) {
-								List<UnitPlus> preds = completeCFG
-										.get(headUnitPlus);
-								preds.add(ud);
+						for(MethodPlus methodPlus:getMethodPlus(ud)){
+							UnitGraphPlus unitGraph = methodToUnitGraph.get(methodPlus);
+							Unit head = unitGraph.getHead();
+							for (UnitPlus headUnitPlus : UnitDirectory) {
+								if (headUnitPlus.getUnit().equals(head)
+												) {
+									List<UnitPlus> preds = completeCFG
+											.get(headUnitPlus);
+									preds.add(ud);
+								}
 							}
 						}
+//						UnitGraphPlus unitGraph = methodToUnitGraph.get(getMethodPlus(ud));
+//						Unit head = unitGraph.getHead();
+//						for (UnitPlus headUnitPlus : UnitDirectory) {
+//							if (headUnitPlus.getUnit().equals(head)
+////									&& (!headUnitPlus.getAttribute().equals("b"))
+//											) {
+//								List<UnitPlus> preds = completeCFG
+//										.get(headUnitPlus);
+//								preds.add(ud);
+//							}
+//						}
 					}else if(ud.getAttribute().equals("b")){
 						//for caller b, add method's tail to caller b's predecessors
-						UnitGraphPlus unitGraph = methodToUnitGraph.get(getMethodPlus(ud));
-						List<UnitPlus> preds = completeCFG.get(ud);
-						Unit tail = unitGraph.getTail();
-						for (UnitPlus tailUnitPlus : UnitDirectory) {
-							if (tailUnitPlus.getUnit().equals(tail)
-//									&& (!tailUnitPlus.getAttribute().equals("a"))
-											) {
-								preds.add(tailUnitPlus);
-								ud.setCall(true);
+						for(MethodPlus methodPlus:getMethodPlus(ud)){
+							UnitGraphPlus unitGraph = methodToUnitGraph.get(methodPlus);
+							List<UnitPlus> preds = completeCFG.get(ud);
+							Unit tail = unitGraph.getTail();
+							for (UnitPlus tailUnitPlus : UnitDirectory) {
+								if (tailUnitPlus.getUnit().equals(tail)
+												) {
+									preds.add(tailUnitPlus);
+									ud.setCall(true);
+								}
 							}
 						}
+//						UnitGraphPlus unitGraph = methodToUnitGraph.get(getMethodPlus(ud));
+//						List<UnitPlus> preds = completeCFG.get(ud);
+//						Unit tail = unitGraph.getTail();
+//						for (UnitPlus tailUnitPlus : UnitDirectory) {
+//							if (tailUnitPlus.getUnit().equals(tail)
+////									&& (!tailUnitPlus.getAttribute().equals("a"))
+//											) {
+//								preds.add(tailUnitPlus);
+//								ud.setCall(true);
+//							}
+//						}
 					}
 				}
 			}

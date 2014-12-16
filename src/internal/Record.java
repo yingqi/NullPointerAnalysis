@@ -29,7 +29,7 @@ public class Record {
 	public boolean compareMethod(MethodPlus methodPlus) {
 		//Q3: Why toString?
 		//Assume: connected with sootmethod
-		return methodPlus.toString().equals(methodPlus.toString());
+		return this.methodPlus.equals(methodPlus);
 	}
 
 	/**
