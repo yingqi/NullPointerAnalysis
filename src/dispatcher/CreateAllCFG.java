@@ -24,6 +24,7 @@ import soot.jimple.internal.AbstractDefinitionStmt;
 import soot.jimple.internal.JInvokeStmt;
 import soot.toolkits.graph.ExceptionalUnitGraphPlus;
 import soot.toolkits.graph.UnitGraphPlus;
+import soot.util.Chain;
 
 /**
  * this class is to create a control flow graph which contains all methods and
@@ -70,10 +71,10 @@ public class CreateAllCFG {
 		for (SootClass sootclass : sootclasses) {
 			List<SootMethod> sootMethods = sootclass.getMethods();
 			sootclass.setApplicationClass();
-			System.out.println("Analyze class: "+sootclass.getName()+sootMethods.size());
+//			System.out.println("Analyze class: "+sootclass.getName()+sootMethods.size());
 			// in the method level
 			for (SootMethod sootMethod : sootMethods) {
-				System.out.println("Analyze method: "+sootclass.getName()+"."+sootMethod.getName());
+//				System.out.println("Analyze method: "+sootclass.getName()+"."+sootMethod.getName());
 				if(sootMethod.isConcrete()&&sootMethod.getSource()!=null
 						&&!sootMethod.isJavaLibraryMethod()
 //						&&!sootMethod.getName().equals("doMakeObject")
@@ -84,12 +85,8 @@ public class CreateAllCFG {
 						Body body = sootMethod.retrieveActiveBody();
 						UnitGraphPlus unitGraph = new ExceptionalUnitGraphPlus(body);
 						List<Type> parameterList = sootMethod.getParameterTypes();
-						List<Local> parameterValues = new ArrayList<>();
-						for(int i=0;i<sootMethod.getParameterCount();i++){
-							parameterValues.add(body.getParameterLocal(i));
-						}
 						MethodPlus methodPlus = new MethodPlus(sootMethod.getName(),
-								sootclass.getName(), parameterList, parameterValues, sootMethod.getParameterCount());
+								sootclass.getName(), parameterList);
 						Methods.add(methodPlus);
 						methodToUnitGraph.put(methodPlus, unitGraph);
 						this.createCFGsForMethod(unitGraph, methodPlus);
@@ -215,29 +212,30 @@ public class CreateAllCFG {
 		List<MethodPlus> methodList = new ArrayList<>();
 		if (unitPlus.getUnit() instanceof JInvokeStmt) {
 			JInvokeStmt jInvokeStmt = (JInvokeStmt) unitPlus.getUnit();
-			SootMethod sootMethod = jInvokeStmt.getInvokeExpr().getMethod();
-			methodList =  SootMethodAnalyzed(sootMethod);
+			InvokeExpr invokeExpr = jInvokeStmt.getInvokeExpr();
+			methodList =  SootMethodAnalyzed(invokeExpr);
 		}else if (unitPlus.getUnit() instanceof AbstractDefinitionStmt){
 			AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) unitPlus.getUnit();
 			Value rightValue = abstractDefinitionStmt.getRightOp();
 			if (rightValue instanceof InvokeExpr){
-				InvokeExpr invokeExpr = (InvokeExpr) rightValue;
-				SootMethod sootMethod = invokeExpr.getMethod();
-				methodList =  SootMethodAnalyzed(sootMethod);
+				InvokeExpr invokeExpr = (InvokeExpr) rightValue;				
+				methodList =  SootMethodAnalyzed(invokeExpr);
 			}	
 		}
 		return methodList;
 	}
 	
-	private List<MethodPlus> SootMethodAnalyzed(SootMethod sootMethod) {
+	private List<MethodPlus> SootMethodAnalyzed(InvokeExpr invokeExpr) {
 		List<MethodPlus> methodList = new ArrayList<>();
-		if (!sootMethod.isPhantom()) {
+		SootMethod sootMethod = invokeExpr.getMethod();
+//		if (!sootMethod.isPhantom()) {
 			for (MethodPlus methodPlusTemp : methodToUnitGraph.keySet()) {
-				if (methodPlusTemp.euqalTo(sootMethod)) {
+				if (methodPlusTemp.equalTo(sootMethod)
+						) {
 					methodList.add(methodPlusTemp);
 				}
 			}
-		}
+//		}
 		return methodList;
 	}
 
@@ -261,16 +259,6 @@ public class CreateAllCFG {
 							}
 						}
 					} 
-					// for caller a in not analyzed method, no use
-//					else {
-//						for (UnitPlus udSucc : UnitDirectory) {
-//							if (udSucc.getNumber() == ud.getNumber()
-//									&& udSucc.getAttribute().equals("b")) {
-//								List<UnitPlus> preds = completeCFG.get(udSucc);
-//								preds.add(ud);
-//							}
-//						}
-//					}
 				} else {
 					// For method analyzed
 					if (ud.getAttribute().equals("a")) {
@@ -287,17 +275,6 @@ public class CreateAllCFG {
 								}
 							}
 						}
-//						UnitGraphPlus unitGraph = methodToUnitGraph.get(getMethodPlus(ud));
-//						Unit head = unitGraph.getHead();
-//						for (UnitPlus headUnitPlus : UnitDirectory) {
-//							if (headUnitPlus.getUnit().equals(head)
-////									&& (!headUnitPlus.getAttribute().equals("b"))
-//											) {
-//								List<UnitPlus> preds = completeCFG
-//										.get(headUnitPlus);
-//								preds.add(ud);
-//							}
-//						}
 					}else if(ud.getAttribute().equals("b")){
 						//for caller b, add method's tail to caller b's predecessors
 						for(MethodPlus methodPlus:getMethodPlus(ud)){
@@ -312,79 +289,12 @@ public class CreateAllCFG {
 								}
 							}
 						}
-//						UnitGraphPlus unitGraph = methodToUnitGraph.get(getMethodPlus(ud));
-//						List<UnitPlus> preds = completeCFG.get(ud);
-//						Unit tail = unitGraph.getTail();
-//						for (UnitPlus tailUnitPlus : UnitDirectory) {
-//							if (tailUnitPlus.getUnit().equals(tail)
-////									&& (!tailUnitPlus.getAttribute().equals("a"))
-//											) {
-//								preds.add(tailUnitPlus);
-//								ud.setCall(true);
-//							}
-//						}
 					}
 				}
 			}
 		}
 	}
-	
-//	private void combineAllCFG() {
-//		for (UnitPlus ud : UnitDirectory) {
-//			if (ud.getAttribute().equals("a")) {
-//				boolean isMethodAnalysed = false;
-//				for (MethodPlus method : Methods) {
-//					if (ud.getUnit().toString()
-//							.contains(method.getMethodName())) {
-//						isMethodAnalysed = true;
-//						UnitGraphPlus unitGraph = methodToUnitGraph.get(method);
-//						Unit head = unitGraph.getHead();
-//						for (UnitPlus headUnitPlus : UnitDirectory) {
-//							if (headUnitPlus.getUnit().equals(head)
-//									&& (!headUnitPlus.getAttribute()
-//											.equals("b"))) {
-//								List<UnitPlus> preds = completeCFG
-//										.get(headUnitPlus);
-//								preds.add(ud);
-//								// ud.setEntry(true);
-//							}
-//						}
-//					}
-//				}
-//				// For methods in other class
-//			} else if (ud.getAttribute().equals("b")) {
-//				boolean isMethodInClass = false;
-//				for (MethodPlus method : Methods) {
-//					if (ud.getUnit().toString()
-//							.contains(method.getMethodName())) {
-//						isMethodInClass = true;
-//						UnitGraphPlus unitGraph = methodToUnitGraph.get(method);
-//						List<UnitPlus> preds = completeCFG.get(ud);
-//						Unit tail = unitGraph.getTail();
-//						for (UnitPlus tailUnitPlus : UnitDirectory) {
-//							if (tailUnitPlus.getUnit().equals(tail)
-//									&& (!tailUnitPlus.getAttribute()
-//											.equals("a"))) {
-//								preds.add(tailUnitPlus);
-//								ud.setCall(true);
-//							}
-//						}
-//					}
-//				}
-//				// For methods in other class
-//				if (!isMethodInClass) {
-//					for (UnitPlus udPred : UnitDirectory) {
-//						if (udPred.getNumber() == ud.getNumber()
-//								&& udPred.getAttribute().equals("a")) {
-//							List<UnitPlus> preds = completeCFG.get(ud);
-//							preds.add(udPred);
-//						}
-//					}
-//				}
-//			}
-//		}
-//
-//	}
+
 
 	/**
 	 * get the unit directory

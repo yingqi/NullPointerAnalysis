@@ -21,10 +21,6 @@ public class MethodPlus {
 	private String methodName;
 	private List<Type> parameterSootTypes;
 	private String className;
-	private List<Local> parameterLocals;
-	private int parameterCount;
-//	private SootMethod sootMethod;
-	//Q4: can sootmethod abandoned?
 
 	/**
 	 * initiate method
@@ -33,12 +29,10 @@ public class MethodPlus {
 	 * @param parameterSootTypes
 	 */
 	public MethodPlus(String methodName, String className,
-			List<Type> parameterSootTypes,List<Local> parameterLocals, int parameterCount) {
+			List<Type> parameterSootTypes) {
 		this.methodName = methodName;
 		this.className = className;
 		this.parameterSootTypes = parameterSootTypes;
-		this.parameterLocals = parameterLocals;
-		this.parameterCount = parameterCount;
 	}
 	
 
@@ -69,27 +63,11 @@ public class MethodPlus {
 		return parameterSootTypes;
 	}
 	
-//	public SootMethod getSootmethod(){
-//		return sootMethod;
-//	}
-	
-	public List<Local> getParameterLocals(){
-		return parameterLocals;
-	}
-	
-	public int getParameterCount(){
-		return parameterCount;
-	}
-	
-	public Local getParameterLocal(int i){
-		return parameterLocals.get(i);
-	}
-
 	@Override
 	public String toString() {
 		String methodString =className+"."+ methodName;
 		for (Type parameterSootType : parameterSootTypes) {
-			methodString += '\t' + parameterSootType.toString();
+			methodString += "  Parameter: " + parameterSootType.toString();
 		}
 		return methodString;
 	}
@@ -104,10 +82,20 @@ public class MethodPlus {
 		}
 	}
 	
-	public boolean euqalTo(SootMethod sootMethod){
+	/**
+	 * If we cannot track the class, we just compare soot method and its parameter name
+	 * @param sootMethod
+	 * @return
+	 */
+	public boolean equalTo(SootMethod sootMethod){
 		return equalTypes(sootMethod.getParameterTypes())&&this.methodName.equals(sootMethod.getName());
 	}
 	
+	/**
+	 * helper method to check whether the types are equal
+	 * @param parameterSootTypes
+	 * @return
+	 */
 	private boolean equalTypes(List<Type> parameterSootTypes){
 		boolean equalTypes = this.parameterSootTypes.size()==parameterSootTypes.size();
 		if(equalTypes){

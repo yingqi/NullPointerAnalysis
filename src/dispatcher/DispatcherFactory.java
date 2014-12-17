@@ -38,16 +38,12 @@ import soot.util.Chain;
 public class DispatcherFactory implements Dispatcher {
 	private Map<UnitPlus, List<UnitPlus>> completeCFG;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
-//	private boolean isDistinguishedOverload;
-//	private List<SootMethod> sootMethods;
 
 	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,
 			StackTraceElement[] stackTrace,
 			Map<MethodPlus, UnitGraphPlus> methodToUnitGraph) {
 		this.completeCFG = completeCFG;
 		this.methodToUnitGraph = methodToUnitGraph;
-//		isDistinguishedOverload = true;
-//		this.sootMethods = sootMethods;
 	}
 
 	@Override
@@ -56,64 +52,13 @@ public class DispatcherFactory implements Dispatcher {
 		Set<UnitPlus> keys = completeCFG.keySet();
 		for (UnitPlus key : keys) {
 			if (key.getNumber() == unitPlus.getNumber()) {
-				// System.out.println(key.getNumber()+key.getAttribute()+":"+unitPlus.getNumber()+unitPlus.getAttribute());
 				if (key.getAttribute().equals(unitPlus.getAttribute())) {
-					// System.out.println("**"+key.getNumber()+key.getAttribute()+":"+unitPlus.getNumber()+unitPlus.getAttribute());
 					preds = completeCFG.get(key);
-					// System.out.println(key.getNumber()+key.getAttribute());
-					// System.out.println(preds.size());
 				}
 			}
 		}
 		return preds;
 	}
-
-//	@Override
-//	public UnitPlus getStackTraceCallSite(UnitPlus unitPlus,
-//			StackTraceElement[] stackTrace, int indexOfStackTrace)
-//			throws ClassNotFoundException, FileNotFoundException {
-//		UnitPlus callSite = null;
-//		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
-//		String methodName = stackTraceElement.getMethodName();
-//		List<UnitPlus> preds = this.getPredecessors(unitPlus);
-//		for (UnitPlus pred : preds) {
-//			if (isDistinguishedOverload) {
-//				if (pred.getMethodPlus().getMethodName().equals(methodName)) {
-//					callSite = pred;
-//				}
-//			}
-//		}
-//		return callSite;
-//	}
-//
-//	@Override
-//	public List<UnitPlus> getStackTraceCallSites(UnitPlus unitPlus,
-//			StackTraceElement[] stackTrace, int indexOfStackTrace)
-//			throws ClassNotFoundException, FileNotFoundException {
-//		List<UnitPlus> sTCallSites = new ArrayList<>();
-//		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
-//		String methodName = stackTraceElement.getMethodName();
-//		List<UnitPlus> callSites = this.getPredecessors(unitPlus);
-//		for (UnitPlus pred : callSites) {
-//			if (pred.getMethodPlus().getMethodName().equals(methodName)) {
-//				sTCallSites.add(pred);
-//			}
-//		}
-//		return sTCallSites;
-//	}
-
-//	@Override
-//	public List<UnitPlus> getAllCallSites(UnitPlus unitPlus) {
-//		List<UnitPlus> allCallSites = this.getPredecessors(unitPlus);
-//		for (UnitPlus upPred : allCallSites) {
-//			if (!(upPred.getUnit() instanceof JInvokeStmt)) {
-//				System.out.println("The Units are not call sites!");
-//				System.out.println(upPred);
-//				allCallSites = null;
-//			}
-//		}
-//		return allCallSites;
-//	}
 
 	@Override
 	public UnitPlus getExitUnitPlus(MethodPlus Method) {
@@ -158,13 +103,6 @@ public class DispatcherFactory implements Dispatcher {
 		return unitPlus.isCall();
 	}
 
-//	@Override
-//	public Value valueMap(Value defValue, UnitPlus unitPlus) {
-//		List<ValueBox> useValueBoxs = unitPlus.getUnit().getUseBoxes();
-//		ValueBox useValueBox = useValueBoxs.get(useValueBoxs.size() - 1);
-//		return useValueBox.getValue();
-//	}
-
 	@Override
 	public List<UnitPlus> StackTraceElementToUnit(
 			StackTraceElement[] stackTrace, int indexOfStackTrace) {
@@ -172,16 +110,8 @@ public class DispatcherFactory implements Dispatcher {
 		StackTraceElement ste = stackTrace[indexOfStackTrace];
 		String methodName = ste.getMethodName();
 		String classname = ste.getClassName();
-//		String fileName = ste.getFileName();
 		int lineNumber = ste.getLineNumber();
 		units.addAll(lineNumberToUnit(methodName, classname, lineNumber));
-//		for (UnitPlus unitPlus : units) {
-//			String methodString = String.format("%-30s", unitPlus
-//					.getMethodPlus().toString());
-//			System.out.println("StackTraceElementToUnit" + '\t'
-//					+ unitPlus.getNumber() + '\t' + methodString
-//					+ unitPlus.getUnit().toString());
-//		}
 		return units;
 	}
 
@@ -205,7 +135,8 @@ public class DispatcherFactory implements Dispatcher {
 							&&unitPlus.getMethodPlus().getclassName().equals(className)
 							&&unitPlus.getMethodPlus().getMethodName().equals(methodName)
 							//to ensure that caller a and caller b is not reviewed twice
-							&&!unitPlus.getAttribute().equals("a")) {
+							//to ensure that do not go into the useless method inside
+							&&!unitPlus.getAttribute().equals("b")) {
 						units.add(unitPlus);
 					}
 				}
@@ -215,58 +146,6 @@ public class DispatcherFactory implements Dispatcher {
 		return units;
 	}
 	
-	
-//	public List<UnitPlus> StackTraceElementToUnit(
-//			StackTraceElement[] stackTrace, int indexOfStackTrace) {
-//		List<UnitPlus> units = new ArrayList<>();
-//		StackTraceElement ste = stackTrace[indexOfStackTrace];
-//		String methodName = ste.getMethodName();
-//		int lineNumber = ste.getLineNumber();
-//		for (SootMethod sootMethod : sootMethods) {
-//			if (sootMethod.getName().equals(methodName)) {
-//				units.addAll(lineNumberToUnit(sootMethod, lineNumber));
-//			}
-//		}
-//		for (UnitPlus unitPlus : units) {
-//			String methodString = String.format("%-30s", unitPlus
-//					.getMethodPlus().toString());
-//			System.out.println("StackTraceElementToUnit" + '\t'
-//					+ unitPlus.getNumber() + '\t' + methodString
-//					+ unitPlus.getUnit().toString());
-//		}
-//		return units;
-//	}
-//	
-//	private List<UnitPlus> lineNumberToUnit(SootMethod sootMethod,
-//			int lineNumber) {
-//		List<UnitPlus> units = new ArrayList<>();
-//		Body body = sootMethod.retrieveActiveBody();
-//		PatchingChain<Unit> unitPatchingChain = body.getUnits();
-//		//for all units
-//		for (Unit unit : unitPatchingChain) {
-//			List<Tag> tags = unit.getTags();
-//			for (Tag tag : tags) {
-//				if (tag instanceof LineNumberTag) {
-//					LineNumberTag lineNumberTag = (LineNumberTag) tag;
-//					if (lineNumber == lineNumberTag.getLineNumber()) {
-//						Set<UnitPlus> unitPluses = completeCFG.keySet();
-//						boolean unitCounted = false;
-//						//for all unit plus
-//						for (UnitPlus unitPlus : unitPluses) {
-//							if (!unitCounted && unit.equals(unitPlus.getUnit())) {
-//								unitCounted = true;
-//								units.add(unitPlus);
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//		return units;
-//	}
-	
-	
-
 	@Override
 	public boolean isTransform(UnitPlus unitPlus) {
 		boolean isTransform = false;
@@ -287,10 +166,6 @@ public class DispatcherFactory implements Dispatcher {
 		return methodToUnitGraph;
 	}
 
-//	@Override
-//	public List<UnitPlus> getAllCallSitesOfMethod(MethodPlus methodPlus) {
-//		return this.getAllCallSites(this.getEntryUnitPlus(methodPlus));
-//	}
 
 	@Override
 	public UnitPlus getStackTraceCallSiteOfMethod(MethodPlus methodPlus,
@@ -302,8 +177,7 @@ public class DispatcherFactory implements Dispatcher {
 		// get all call sites of this method
 		List<UnitPlus> preds = this.getPredecessors(this
 				.getEntryUnitPlus(methodPlus));
-//		System.out.println("Entry: "+this
-//				.getEntryUnitPlus(methodPlus));
+//		System.out.println("Entry: "+this .getEntryUnitPlus(methodPlus));
 		// check which call site fit the stack trace
 		for (UnitPlus pred : preds) {
 //			System.out.println("Call Site Pred: "+pred);

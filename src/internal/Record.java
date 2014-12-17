@@ -27,8 +27,6 @@ public class Record {
 	 * @return
 	 */
 	public boolean compareMethod(MethodPlus methodPlus) {
-		//Q3: Why toString?
-		//Assume: connected with sootmethod
 		return this.methodPlus.equals(methodPlus);
 	}
 

@@ -46,21 +46,16 @@ import soot.util.Chain;
 public class Analysis {
 	private String phaseOption1;
 	private String phaseOption2;
-//	private ArrayList<String> classNames;
 	private Map<UnitPlus, List<UnitPlus>> completeCFG;
-	// private StackTraceElement[] stackTrace;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
 	private Dispatcher dispatcher;
-//	private List<SootMethod> sootMethods;
 
 	public Analysis(StackTraceElement[] stackTrace, List<String> sootClassPaths,
 			int filetype) {
 		// use location to find soot class
-//		classNames = new ArrayList<>();
+		// actually we can only have one sootpath
 		List<SootClass> sootClasses = new ArrayList<SootClass>();
-//		this.sootMethods = new ArrayList<>();
 		for(String sootClassPath:sootClassPaths){
-//			System.out.println("sootClassPath: "+sootClassPath);
 			phaseOption1 = "jpt";
 			phaseOption2 = "use-original-names:true";
 			Options.v().set_allow_phantom_refs(true);
@@ -74,52 +69,21 @@ public class Analysis {
 			if (filetype == 1) {
 				classNames = openClassFiles(sootClassPath, sootClassPath);
 			} else if (filetype == 0) {
-//				classNames = openJarFiles(sootClassPath);
+				// analyze the jar file
 			}
-
-			// System.out.println(classNames.size());
 			for (String classNameString : classNames) {
-//				System.out.println(classNameString);
-//				SootClass sootclass = Scene.v().getSootClass(classNameString);
 				SootClass sootclass = Scene.v().loadClassAndSupport(classNameString);
 				sootClasses.add(sootclass);
-//				System.out.println("sootClass: "+sootclass.getName());
 				Scene.v().addBasicClass(classNameString, sootclass.SIGNATURES);
 			}
 			// Be careful if we have to load necessary classes.
 			Scene.v().loadNecessaryClasses();
 					
-			
-//			this.sootMethods = new ArrayList<>();
-//			System.out.println(sootClasses.size());
-//			for (SootClass sootClass : sootClasses) {
-//				System.out.println(sootClass.getName());
-//				sootMethods.addAll(sootClass.getMethods());
-//			}
 		}
 		CreateAllCFG completeCFG = new CreateAllCFG(sootClasses);
 		this.completeCFG = completeCFG.createCFG();
 		this.methodToUnitGraph = completeCFG.getMethodToUnitGraph();	
 	}
-
-//
-//	private ArrayList<String> openJarFiles(String path) {
-//		ArrayList<String> classNames = new ArrayList<>();
-//		try {
-//			JarFile jarFile = new JarFile(path);
-//			Enumeration entries = jarFile.entries();
-//			while (entries.hasMoreElements()) {
-//				JarEntry entry = (JarEntry) entries.nextElement();
-//				if (entry.isDirectory()) {
-//					// to be continued
-//				}
-//			}
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		return classNames;
-//	}
 
 	/**
 	 * helper method to get class names in the assigned path
@@ -152,6 +116,63 @@ public class Analysis {
 		}
 		return classNames;
 	}
+
+	/**
+	 * do really the analysis
+	 * 
+	 * @throws ClassNotFoundException
+	 * @throws FileNotFoundException
+	 */
+	public void doAnalysis(StackTraceElement[] stackTrace)
+			throws ClassNotFoundException, FileNotFoundException {
+		dispatcher = new DispatcherFactory(completeCFG, stackTrace,
+				methodToUnitGraph);
+		ComputeNPA computeNPA = new ComputeNPA(dispatcher, stackTrace);
+		List<UnitPlus> errorUnits = dispatcher.StackTraceElementToUnit(
+				stackTrace, 0);
+//		System.out.println("Error Units Number: "+errorUnits.size());
+		for (UnitPlus errorUnit : errorUnits) {
+			List<Value> possibleErrorValues = new ArrayList<>();
+			List<ValueBox> useBoxs = errorUnit.getUnit().getUseBoxes();
+			for(ValueBox useBox:useBoxs){
+				possibleErrorValues.add(useBox.getValue());
+			}
+			for(Value value:possibleErrorValues){
+				List<State> errorStates = new ArrayList<>();
+				errorStates.add(new State(value, errorUnit.getMethodPlus()));
+//				System.out.println("ErrorUnit: " + errorUnit+"\tError States: "+errorStates.get(0).getValue());
+				computeNPA.resetIndexOfStarckTrace();
+				Element errorElement = new Element(errorUnit, errorStates);
+				computeNPA.analyzeMethod(errorElement);
+
+			}
+		}
+
+		// show NPA founded
+		ArrayList<UnitPlus> NPA = computeNPA.getNPA();
+//		System.out.println(NPA.size());
+		for (UnitPlus unitPlus : NPA) {
+			String methodString = String.format("%-30s", unitPlus
+					.getMethodPlus().toString());
+			System.out.println("NPA" + '\t' + unitPlus.getNumber() + '\t'
+					+ methodString + unitPlus.getUnit().toString());
+			List<Tag> tags = unitPlus.getUnit().getTags();
+			boolean isPrinted = false;
+			if(!isPrinted){
+				for (Tag tag : tags) {
+					if (tag instanceof LineNumberTag) {
+						isPrinted = true;
+						LineNumberTag lineNumberTag = (LineNumberTag) tag;
+						System.out.println("File: "
+								+ unitPlus.getMethodPlus().getclassName()
+								+ ".java\t" + "Line Number: "
+								+ lineNumberTag.getLineNumber());
+					}
+				}
+			}
+		}
+	}
+
 
 	/**
 	 * show the comprehensive control flow graph
@@ -219,76 +240,7 @@ public class Analysis {
 
 		}
 	}
-
-	/**
-	 * do really the analysis
-	 * 
-	 * @throws ClassNotFoundException
-	 * @throws FileNotFoundException
-	 */
-	public void doAnalysis(StackTraceElement[] stackTrace)
-			throws ClassNotFoundException, FileNotFoundException {
-		dispatcher = new DispatcherFactory(completeCFG, stackTrace,
-				methodToUnitGraph);
-		ComputeNPA computeNPA = new ComputeNPA(dispatcher, stackTrace);
-		List<UnitPlus> errorUnits = dispatcher.StackTraceElementToUnit(
-				stackTrace, 0);
-		System.out.println("Error Units Number: "+errorUnits.size());
-		for (UnitPlus errorUnit : errorUnits) {
-//			if (errorUnit.getUnit() instanceof AbstractDefinitionStmt) {
-//				// Q1: whether there are other statments which can cause NPE?
-//				AbstractDefinitionStmt ads = (AbstractDefinitionStmt) errorUnit
-//						.getUnit();
-//				Value possibleErrorValue = ads.getRightOp();
-//				List<State> errorStates = new ArrayList<>();
-//				errorStates.add(new State(possibleErrorValue, errorUnit.getMethodPlus()));
-//				System.out.println("ErrorUnit: " + errorUnit+"\tError States: "+errorStates.get(0).getValue());
-//				computeNPA.resetIndexOfStarckTrace();
-//				Element errorElement = new Element(errorUnit, errorStates);
-//				computeNPA.analyzeMethod(errorElement);
-//			}
-			
-			List<Value> possibleErrorValues = new ArrayList<>();
-			List<ValueBox> useBoxs = errorUnit.getUnit().getUseBoxes();
-			for(ValueBox useBox:useBoxs){
-				possibleErrorValues.add(useBox.getValue());
-			}
-			for(Value value:possibleErrorValues){
-				List<State> errorStates = new ArrayList<>();
-				errorStates.add(new State(value, errorUnit.getMethodPlus()));
-				System.out.println("ErrorUnit: " + errorUnit+"\tError States: "+errorStates.get(0).getValue());
-				computeNPA.resetIndexOfStarckTrace();
-				Element errorElement = new Element(errorUnit, errorStates);
-				computeNPA.analyzeMethod(errorElement);
-
-			}
-		}
-
-		// show NPA founded
-		ArrayList<UnitPlus> NPA = computeNPA.getNPA();
-//		System.out.println(NPA.size());
-		for (UnitPlus unitPlus : NPA) {
-			String methodString = String.format("%-30s", unitPlus
-					.getMethodPlus().toString());
-			System.out.println("NPA" + '\t' + unitPlus.getNumber() + '\t'
-					+ methodString + unitPlus.getUnit().toString());
-			List<Tag> tags = unitPlus.getUnit().getTags();
-			boolean isPrinted = false;
-			if(isPrinted){
-				for (Tag tag : tags) {
-					if (tag instanceof LineNumberTag) {
-						isPrinted = true;
-						LineNumberTag lineNumberTag = (LineNumberTag) tag;
-						System.out.println("File: "
-								+ unitPlus.getMethodPlus().getclassName()
-								+ ".java\t" + "Line Number: "
-								+ lineNumberTag.getLineNumber());
-					}
-				}
-			}
-		}
-	}
-
+	
 	/**
 	 * get dispatcher
 	 * 

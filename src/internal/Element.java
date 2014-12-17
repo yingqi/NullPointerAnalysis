@@ -25,14 +25,6 @@ public class Element
 	private List<State> states;
 	private boolean isVisited;
 	
-//	public Element(UnitPlus unitPlus, State state)
-//	{
-//		this.unitPlus=unitPlus;
-//		states = new ArrayList<>();
-//		states.add(state);
-//		isVisited =false;
-//	}
-	
 	/**
 	 * constructor for multiple states
 	 * @param unitPlus
@@ -112,26 +104,6 @@ public class Element
 		}
 		states = newStates;
 	}
-	
-//	public Element transform()
-//	{	
-//		List<State> newStates =new ArrayList<>();
-//		Element newElement = new Element(unitPlus, newStates);
-//		if(unitPlus.getUnit() instanceof AbstractDefinitionStmt){
-//			AbstractDefinitionStmt ads  = (AbstractDefinitionStmt) unitPlus.getUnit();
-//			Value leftValue = ads.getLeftOp();
-//			for(State state:states){
-//				if(leftValue.toString().equals(state.getValue().toString())){
-//					// Q2: how to euqal these two better than toString?
-//					State newState = new State(ads.getRightOp());
-//					newStates.add(newState);
-//				}else{
-//					newStates.add(state);
-//				}
-//			}
-//		}
-//		return newElement;
-//	}
 	
 	/**
 	 * to see whether an element is a predicate

@@ -31,8 +31,6 @@ public class StartAnalysis {
 		
 //		String fileString = "/home/leo/jfc/bug.txt";
 //		sourceStrings.add("/home/leo/jfc/jfc");
-//		sourceStrings.add("/home/leo/jfc/jfreechart");
-//		sourceStrings.add("/home/leo/jfc/Bug2.class");
 		int fileType = 1;
 		
 		
