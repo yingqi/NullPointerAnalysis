@@ -1,12 +1,8 @@
 package example;
 
-import java.beans.PropertyChangeEvent;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
 
-import test.Analysis;
+import analysis.Analysis;
 
 
 public class ExampleWithException {
@@ -28,11 +24,10 @@ public class ExampleWithException {
 			 e.printStackTrace();
 			 System.out.println("************");
 			 System.out.println(e.getStackTrace()[0]);
-			 List<String> paths = new ArrayList<>();
-			 paths.add("/home/leo/RunTimeException/NullPointerAnalysis/bin");
-			 Analysis analysis = new Analysis(e.getStackTrace(), paths, 1);
+			 Analysis analysis = new Analysis(e.getStackTrace(), "/home/leo/RunTimeException/NullPointerAnalysis/bin", 1
+					 , System.currentTimeMillis());
 			 analysis.showCFG();
-			 analysis.doAnalysis(e.getStackTrace());
+			 analysis.doAnalysis(e.getStackTrace(), System.currentTimeMillis());
 		}
 	}
 

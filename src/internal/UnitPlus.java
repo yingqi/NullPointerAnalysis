@@ -26,7 +26,7 @@ public class UnitPlus {
 	public UnitPlus(int number, Unit unit,MethodPlus Method){
 		numberInteger = new Integer(number);
 		this.unit = unit;
-		attributeString="null";
+		attributeString="";
 		this.Method = Method;
 		isCall = false;
 	}
@@ -122,7 +122,7 @@ public class UnitPlus {
 	@Override
 	public String toString(){
 		String toString ="";
-		if (attributeString.equals("null")) {
+		if (attributeString.equals("")) {
 			//Show the units
 			String methodString = String.format("%-30s", Method.toString());
 			toString ="unit" + '\t' + numberInteger + '\t'

@@ -6,6 +6,7 @@ import java.util.List;
 
 import soot.Body;
 import soot.Local;
+import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
 import soot.util.Chain;
@@ -21,6 +22,30 @@ public class MethodPlus {
 	private String methodName;
 	private List<Type> parameterSootTypes;
 	private String className;
+	private SootClass sootClass;
+	private UnitPlus headPlus;
+	private UnitPlus tailPlus;
+	private Body body;
+
+	public UnitPlus getHeadPlus() {
+		return headPlus;
+	}
+
+
+	public void setHeadPlus(UnitPlus headPlus) {
+		this.headPlus = headPlus;
+	}
+
+
+	public UnitPlus getTailPlus() {
+		return tailPlus;
+	}
+
+
+	public void setTailPlus(UnitPlus tailPlus) {
+		this.tailPlus = tailPlus;
+	}
+
 
 	/**
 	 * initiate method
@@ -29,12 +54,24 @@ public class MethodPlus {
 	 * @param parameterSootTypes
 	 */
 	public MethodPlus(String methodName, String className,
-			List<Type> parameterSootTypes) {
+			List<Type> parameterSootTypes,SootClass sootClass, Body body) {
 		this.methodName = methodName;
 		this.className = className;
 		this.parameterSootTypes = parameterSootTypes;
+		this.sootClass = sootClass;
+		this.body = body;
 	}
 	
+
+	public Body getBody() {
+		return body;
+	}
+
+
+	public void setBody(Body body) {
+		this.body = body;
+	}
+
 
 	/**
 	 * get method name.
@@ -69,7 +106,7 @@ public class MethodPlus {
 		for (Type parameterSootType : parameterSootTypes) {
 			methodString += "  Parameter: " + parameterSootType.toString();
 		}
-		return methodString;
+		return methodString+'\t';
 	}
 	
 	@Override
@@ -106,5 +143,15 @@ public class MethodPlus {
 			}
 		}
 		return equalTypes;
+	}
+
+
+	public SootClass getSootClass() {
+		return sootClass;
+	}
+
+
+	public void setSootClass(SootClass sootClass) {
+		this.sootClass = sootClass;
 	}
 }

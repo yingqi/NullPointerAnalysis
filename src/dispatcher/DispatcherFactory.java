@@ -1,10 +1,12 @@
 package dispatcher;
 
 import internal.MethodPlus;
+import internal.State;
 import internal.UnitPlus;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,10 +38,10 @@ import soot.util.Chain;
  *
  */
 public class DispatcherFactory implements Dispatcher {
-	private Map<UnitPlus, List<UnitPlus>> completeCFG;
+	private Map<UnitPlus, Set<UnitPlus>> completeCFG;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
 
-	public DispatcherFactory(Map<UnitPlus, List<UnitPlus>> completeCFG,
+	public DispatcherFactory(Map<UnitPlus, Set<UnitPlus>> completeCFG,
 			StackTraceElement[] stackTrace,
 			Map<MethodPlus, UnitGraphPlus> methodToUnitGraph) {
 		this.completeCFG = completeCFG;
@@ -47,8 +49,8 @@ public class DispatcherFactory implements Dispatcher {
 	}
 
 	@Override
-	public List<UnitPlus> getPredecessors(UnitPlus unitPlus) {
-		List<UnitPlus> preds = null;
+	public Set<UnitPlus> getPredecessors(UnitPlus unitPlus) {
+		Set<UnitPlus> preds = null;
 		Set<UnitPlus> keys = completeCFG.keySet();
 		for (UnitPlus key : keys) {
 			if (key.getNumber() == unitPlus.getNumber()) {
@@ -104,9 +106,9 @@ public class DispatcherFactory implements Dispatcher {
 	}
 
 	@Override
-	public List<UnitPlus> StackTraceElementToUnit(
+	public Set<UnitPlus> StackTraceElementToUnit(
 			StackTraceElement[] stackTrace, int indexOfStackTrace) {
-		List<UnitPlus> units = new ArrayList<>();
+		Set<UnitPlus> units = new HashSet<>();
 		StackTraceElement ste = stackTrace[indexOfStackTrace];
 		String methodName = ste.getMethodName();
 		String classname = ste.getClassName();
@@ -153,8 +155,9 @@ public class DispatcherFactory implements Dispatcher {
 			isTransform = true;
 			AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) unitPlus.getUnit();
 			Value rightValue = abstractDefinitionStmt.getRightOp();
-			// if right value is invoke expression, it is still not valued as definition statement
-			if(rightValue instanceof InvokeExpr){
+			// Regardless of whether right value is invoke expression, as long as it is not call
+			// the unit is a transform
+			if(unitPlus.isCall()){
 				isTransform = false;
 			}
 		}
@@ -175,7 +178,7 @@ public class DispatcherFactory implements Dispatcher {
 		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
 //		System.out.println("stackTraceElement: "+stackTraceElement);
 		// get all call sites of this method
-		List<UnitPlus> preds = this.getPredecessors(this
+		Set<UnitPlus> preds = this.getPredecessors(this
 				.getEntryUnitPlus(methodPlus));
 //		System.out.println("Entry: "+this .getEntryUnitPlus(methodPlus));
 		// check which call site fit the stack trace
@@ -215,6 +218,15 @@ public class DispatcherFactory implements Dispatcher {
 			isTail =true;
 		}
 		return isTail;
+	}
+
+	@Override
+	public Set<State> copyStates(Set<State> originalStates) {
+		Set<State> newStates = new HashSet<>();
+		for(State state : originalStates){
+			newStates.add(new State(state.getValue(), state.getmethod(), state.getAttribute(), state.getReturnInMethodPlus()));
+		}
+		return newStates;
 	}
 	
 }

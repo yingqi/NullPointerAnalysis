@@ -1,13 +1,13 @@
 package dispatcher;
 
 import internal.MethodPlus;
+import internal.State;
 import internal.UnitPlus;
 
 import java.io.FileNotFoundException;
 import java.util.List;
-
-
 import java.util.Map;
+import java.util.Set;
 
 import java_cup.internal_error;
 import soot.Unit;
@@ -27,7 +27,7 @@ public interface Dispatcher {
 	 * @param unit
 	 * @return
 	 */
-	public List<UnitPlus> getPredecessors(UnitPlus unitPlus);
+	public Set<UnitPlus> getPredecessors(UnitPlus unitPlus);
 
 	/**
 	 * gets the call site based on the stack trace There are two choices. If the
@@ -106,7 +106,7 @@ public interface Dispatcher {
 	 * @param indexOfStackTrace
 	 * @return
 	 */
-	public List<UnitPlus> StackTraceElementToUnit(StackTraceElement[] stackTrace, int indexOfStackTrace);
+	public Set<UnitPlus> StackTraceElementToUnit(StackTraceElement[] stackTrace, int indexOfStackTrace);
 	
 	/**
 	 * get caller a for assigned caller b
@@ -121,5 +121,12 @@ public interface Dispatcher {
 	 * @return
 	 */
 	public boolean isTailOfMethod(UnitPlus unitPlus);
+	
+	/**
+	 * Copy a list of new states
+	 * @param originalStates
+	 * @return
+	 */
+	public Set<State> copyStates(Set<State> originalStates);
 
 }

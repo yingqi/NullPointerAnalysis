@@ -1,6 +1,8 @@
 package internal;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Record is an internal class for whether the method is visited record.
@@ -15,10 +17,16 @@ public class Record {
 	 * @param incomingStates
 	 * @param outgoingStates
 	 */
-	public Record(MethodPlus methodPlus,List<State> incomingStates,List<State> outgoingStates){
+	public Record(MethodPlus methodPlus,Set<State> incomingStates,Set<State> outgoingStates){
 		this.methodPlus = methodPlus;
-		this.incomingStates = incomingStates;
-		this.outgoingStates = outgoingStates;
+		this.incomingStates = new HashSet<>();
+		this.outgoingStates = new HashSet<>();
+		for(State state:incomingStates){
+			this.incomingStates.add(new State(state.getValue(), state.getmethod(), state.getAttribute(), state.getReturnInMethodPlus()));
+		}
+		for(State state:outgoingStates){
+			this.outgoingStates.add(new State(state.getValue(), state.getmethod(), state.getAttribute(), state.getReturnInMethodPlus()));
+		}
 	}
 	
 	/**
@@ -35,12 +43,51 @@ public class Record {
 	 * @param states
 	 * @return
 	 */
-	public boolean compareIncomingStates(List<State> states) {
+	public boolean compareIncomingStates(Set<State> states) {
 		boolean statesEquals =  incomingStates.size()==states.size();
 		if(statesEquals){
-			for(int i=0;i<states.size();i++){
-				if(!states.get(i).equals(incomingStates.get(i))){
-					statesEquals =false;
+			for(State state:incomingStates){
+				if(state.getAttribute().equals("")){
+					statesEquals = false;
+					for(State state2:states){
+						if(state2.equalTo(state)){
+							statesEquals = true;
+							break;
+						}
+					}
+				}else{	
+					statesEquals = false;
+					for(State state2:states){
+						if(!state2.getAttribute().equals("")){
+							statesEquals = true;
+							break;
+						}
+					}
+				}
+				if(!statesEquals){
+					break;
+				}
+			}
+			for(State state:states){
+				if(state.getAttribute().equals("")){
+					statesEquals = false;
+					for(State state2:incomingStates){
+						if(state2.equalTo(state)){
+							statesEquals = true;
+							break;
+						}
+					}
+				}else{
+					statesEquals = false;
+					for(State state2:incomingStates){
+						if(!state2.getAttribute().equals("")){
+							statesEquals = true;
+							break;
+						}
+					}
+				}
+				if(!statesEquals){
+					break;
 				}
 			}
 		}
@@ -48,10 +95,10 @@ public class Record {
 	}
 
 	private MethodPlus methodPlus;
-	private List<State> incomingStates;
-	private List<State> outgoingStates;
+	private Set<State> incomingStates;
+	private Set<State> outgoingStates;
 
-	public List<State> getOutgoingStates() {
+	public Set<State> getOutgoingStates() {
 		return outgoingStates;
 	}
 	
@@ -77,9 +124,30 @@ public class Record {
 			boolean equals =  this.compareIncomingStates(record.getIncomingStates())&&this.getMethodPlus().equals(record.getMethodPlus());
 			equals =  outgoingStates.size()==record.getOutgoingStates().size();
 			if(equals){
-				for(int i=0;i<outgoingStates.size();i++){
-					if(!outgoingStates.get(i).equals(incomingStates.get(i))){
-						equals =false;
+				for(State state:outgoingStates){
+					boolean isStateInRecord = false;
+					for(State stateInRecord:record.getOutgoingStates()){
+						if(state.equalTo(stateInRecord)){
+							isStateInRecord = true;
+							break;
+						}
+					}
+					if(!isStateInRecord){
+						equals = false;
+					}
+				}
+				if(equals){
+					for(State state:record.getOutgoingStates()){
+						boolean isStateInOutStates = false;
+						for(State stateInOutStates:outgoingStates){
+							if(state.equalTo(stateInOutStates)){
+								isStateInOutStates = true;
+								break;
+							}
+						}
+						if(!isStateInOutStates){
+							equals = false;
+						}
 					}
 				}
 			}
@@ -93,13 +161,13 @@ public class Record {
 	public void setMethodPlus(MethodPlus methodPlus) {
 		this.methodPlus = methodPlus;
 	}
-	public List<State>  getIncomingStates() {
+	public Set<State>  getIncomingStates() {
 		return incomingStates;
 	}
-	public void setIncomingStates(List<State> incomingStates) {
+	public void setIncomingStates(Set<State> incomingStates) {
 		this.incomingStates = incomingStates;
 	}
-	public void setOutgoingStates(List<State>  outgoingStates) {
+	public void setOutgoingStates(Set<State>  outgoingStates) {
 		this.outgoingStates = outgoingStates;
 	}
 }
