@@ -1,59 +1,135 @@
 package internal;
 
-import soot.Immediate;
-import soot.RefType;
-import soot.SootClass;
-import soot.SootField;
-import soot.SootFieldRef;
+import dispatcher.LightDispatcher;
+import soot.Local;
 import soot.Value;
-import soot.JastAddJ.ThisAccess;
+import soot.jimple.ArrayRef;
 import soot.jimple.Expr;
-import soot.jimple.InstanceFieldRef;
-import soot.jimple.Ref;
-
-
 /**
  * This class is the state of a node
  */
 /**
  * @version 2014-08-06
  * @author Yingqi
- *
+ * 
  */
-public class State
-{
+public class State {
 	private Value variable;
-	private String attribute;
+	// private String attribute;
+	private LightDispatcher lightDispatcher;
 	private MethodPlus methodPlus;
 	private MethodPlus returnInMethodPlus;
-	private Value baseValue;
-	private SootClass baseSootClass;
-	private SootField field;
-	
-	/**
-	 * constructor
-	 * @param initValue
-	 */
-	public State(Value initValue, MethodPlus methodPlus, String attribute, MethodPlus returnInMethodPlus){
-		variable = initValue;
-		this.attribute = attribute;
-		this.methodPlus = methodPlus;
-		this.returnInMethodPlus = returnInMethodPlus;
-		if (variable instanceof Ref) {
-			Ref ref = (Ref) variable;
-			if (ref instanceof InstanceFieldRef) {
-				InstanceFieldRef instanceFieldRef = (InstanceFieldRef) ref;
-				this.field = instanceFieldRef.getField();
-				this.baseValue = instanceFieldRef.getBase();
-				if(baseValue.getType() instanceof RefType){
-					RefType refType = (RefType) baseValue.getType();
-					this.baseSootClass = refType.getSootClass();
-					
-				}
-			}
+//	private Value baseValue;
+//	private Value arrayBaseValue;
+//	private Value arrayIndexValue;
+//	private SootClass baseSootClass;
+//	private SootField field;
+	private boolean isNormalValue;
+	private boolean isReturnValue;
+	private boolean isArrayBaseValue;
+	private boolean isArrayValue;
+
+	public Value getVariable() {
+		return variable;
+	}
+
+	public MethodPlus getMethodPlus() {
+		return methodPlus;
+	}
+
+//	public Value getBaseValue() {
+//		return baseValue;
+//	}
+
+	public Value getArrayBaseValue() {
+		if (variable instanceof ArrayRef) {
+			ArrayRef arrayRef = (ArrayRef) variable;
+			return arrayRef.getBase();
+		}else {
+			return null;
 		}
 	}
-	
+//
+//	public Value getArrayIndexValue() {
+//		return arrayIndexValue;
+//	}
+
+//	public SootClass getBaseSootClass() {
+//		return baseSootClass;
+//	}
+//
+//	public SootField getField() {
+//		return field;
+//	}
+
+	public boolean isNormalValue() {
+		return isNormalValue;
+	}
+
+	public boolean isReturnValue() {
+		return isReturnValue;
+	}
+
+	public boolean isArrayBaseValue() {
+		return isArrayBaseValue;
+	}
+
+	public boolean isArrayValue() {
+		return isArrayValue;
+	}
+
+	/**
+	 * constructor
+	 * 
+	 * @param initValue
+	 */
+	public State(State state) {
+		lightDispatcher = new LightDispatcher();
+		isNormalValue = state.isNormalValue();
+		isArrayValue = state.isArrayValue();
+		isArrayBaseValue = state.isArrayBaseValue();
+		isReturnValue = state.isReturnValue();
+		variable = state.getVariable();
+		methodPlus = state.getmethod();
+		returnInMethodPlus = state.getReturnInMethodPlus();
+//		field = state.getField();
+//		baseSootClass = state.getBaseSootClass();
+//		baseValue = state.getBaseValue();
+//		arrayBaseValue = state.getArrayBaseValue();
+//		arrayIndexValue = state.getArrayIndexValue();
+	}
+
+	public State(Value initValue, MethodPlus methodPlus) {
+		lightDispatcher = new LightDispatcher();
+		isNormalValue = true;
+		isArrayValue = false;
+		isArrayBaseValue = false;
+		isReturnValue = false;
+		variable = initValue;
+		this.methodPlus = methodPlus;
+//		baseValue = null;
+//		field = null;
+//		baseSootClass = null;
+//		arrayBaseValue = null;
+//		arrayIndexValue = null;
+//		if (variable instanceof Ref) {
+//			Ref ref = (Ref) variable;
+//			if (ref instanceof InstanceFieldRef) {
+//				InstanceFieldRef instanceFieldRef = (InstanceFieldRef) ref;
+//				this.field = instanceFieldRef.getField();
+//				this.baseValue = instanceFieldRef.getBase();
+//				if (baseValue.getType() instanceof RefType) {
+//					RefType refType = (RefType) baseValue.getType();
+//					this.baseSootClass = refType.getSootClass();
+//				}
+//			} else if (ref instanceof ArrayRef) {
+//				ArrayRef arrayRef = (ArrayRef) ref;
+//				arrayBaseValue = arrayRef.getBase();
+//				arrayIndexValue = arrayRef.getIndex();
+//			}
+//		}
+	}
+
 	public MethodPlus getReturnInMethodPlus() {
 		return returnInMethodPlus;
 	}
@@ -63,169 +139,115 @@ public class State
 	}
 
 	/**
-	 * replace the value in a state
-	 * Remember to check NPA before we encounter replaceValue
+	 * replace the value in a state Remember to check NPA before we encounter replaceValue
+	 * 
 	 * @param value
 	 */
-//	public boolean testReplaceValue(Value value, MethodPlus methodPlus){
-//		boolean replace = false;
-//		if(value instanceof Expr){
-//		System.out.println("Error value cannot be replaced with Expr: "+value);	
-//		}else {
-//			replace = true;
-////			variable = value;
-////			this.methodPlus = methodPlus;
-////			state = this;
-//		}
-//		return replace;
-//	}
-	
-	public void replaceValue(Value value, UnitPlus unitPlus){
-		if(value instanceof Expr){
-			System.out.println("Error value cannot be replaced with Expr: "+value);	
-			}else {
-				System.out.println("Value Replace In: "+unitPlus);
-				System.out.println("Value Replace: "+this.methodPlus+" "+variable+"\tto "+unitPlus.getMethodPlus()+" "+value);
-				variable = value;
-				this.methodPlus = unitPlus.getMethodPlus();	
-			}
+	public void replaceValue(Value value, UnitPlus unitPlus) {
+		if (value instanceof Expr) {
+			System.out.println("Error value cannot be replaced with Expr: " + value);
+		} else {
+			System.out.println("Value Replace In: " + unitPlus);
+			System.out.println("Value Replace: " + this.methodPlus + " " + variable + "\tto "
+					+ unitPlus.getMethodPlus() + " " + value);
+			variable = value;
+			this.methodPlus = unitPlus.getMethodPlus();
+		}
 	}
-	/**
-	 * get the value
-	 * @return
-	 */
-	public Value getValue(){
-		return variable;
+
+	public boolean equalValue(Value value, MethodPlus methodPlus){
+		return lightDispatcher.equalTwoValues(variable, this.methodPlus, value, methodPlus);
 	}
 	
 	/**
 	 * get the method
+	 * 
 	 * @return
 	 */
-	public MethodPlus getmethod(){
+	public MethodPlus getmethod() {
 		return methodPlus;
 	}
-	
+
 	@Override
-	public String toString(){
-		return methodPlus.toString()+"\tValue: "+variable.toString()+" "+attribute;
+	public String toString() {
+		return methodPlus.toString() + "\tValue: " + variable.toString() + " ";
 	}
-	
+
 	@Override
-	public boolean equals(Object object){
+	public boolean equals(Object object) {
 		return equalTo(object);
 	}
-	
-//	public boolean equalValue(Value value, MethodPlus methodPlus){
-//		boolean equalValue = false;
-//		if(value instanceof Expr){
-//			equalValue = value.toString().equals(variable.toString());
-////			System.out.println("Expr: "+value);
-//		}else {
-//			equalValue = value.toString().equals(variable.toString());
-//			if(equalValue){
-//				System.out.println(value+"\t"+variable);
-//				System.out.println(value.equals(variable));
-//				System.out.println(value.equivTo(variable));
-//				if (value instanceof Ref) {
-////					System.out.println("Ref: "+value);
-//				}else if(value instanceof Immediate){
-////					System.out.println("Immediate: "+value);
-//					equalValue = this.methodPlus.equals(methodPlus);
-//				}
-//			}
-//			else {
-//				if (value instanceof Ref) {
-//					Ref ref = (Ref) value;
-//					if (ref instanceof InstanceFieldRef) {
-//						InstanceFieldRef instanceFieldRef = (InstanceFieldRef) ref;
-//						instanceFieldRef.getField();
-//						SootField valueField = instanceFieldRef.getField();
-//						if(valueField.equals(field)){
-//							Value base = instanceFieldRef.getBase();
-//							if(base.getType() instanceof RefType){
-//								RefType refType = (RefType) base.getType();
-//								SootClass valueBaseSootClass = refType.getSootClass();
-//
-//								if((!valueBaseSootClass.getFields().contains(field))||(!baseSootClass.getFields().contains(valueField))){
-//									equalValue=isParent(valueBaseSootClass, baseSootClass)||isParent(baseSootClass, valueBaseSootClass);
-//								}
-//							}
-//						}
-//						
-//					}
-//				}else if(value instanceof Immediate){
-////					System.out.println("Immediate: "+value);
-//				}
-//			}
-//		}
-//		return equalValue;
-//	}
-	
-	public boolean equalValue(Value value, MethodPlus methodPlus){
-	boolean equalValue = false;
-	if(value instanceof Expr){
-//		equalValue = value.toString().equals(variable.toString());
-		if(value.toString().equals(variable.toString())){
-			System.out.println("Error Expr: "+value);
-		}
-		equalValue = false;
-	}else if(value instanceof Immediate){
-		equalValue = value.equals(variable)&&this.methodPlus.equals(methodPlus);;
-	}else if(value instanceof Ref){
-		equalValue = value.toString().equals(variable.toString());
-		if(!equalValue){
-			Ref ref = (Ref) value;
-			if (ref instanceof InstanceFieldRef) {
-				InstanceFieldRef instanceFieldRef = (InstanceFieldRef) ref;
-				instanceFieldRef.getField();
-				SootField valueField = instanceFieldRef.getField();
-				if(valueField.equals(field)){
-					Value base = instanceFieldRef.getBase();
-					if(base.getType() instanceof RefType){
-						RefType refType = (RefType) base.getType();
-						SootClass valueBaseSootClass = refType.getSootClass();
-						if((!valueBaseSootClass.getFields().contains(field))||(!baseSootClass.getFields().contains(valueField))){
-							equalValue=isParent(valueBaseSootClass, baseSootClass)||isParent(baseSootClass, valueBaseSootClass);
-						}
-					}
+
+	public boolean equalTo(Object object) {
+		boolean equals = false;
+		if (!(object instanceof State)) {
+			equals = false;
+		} else {
+			State state = (State) object;
+			if (state.isReturnValue) {
+				equals = isReturnValue;
+			} else {
+				if (equalValueType(state)) {
+					equals = equalValue(state.getVariable(), state.getmethod());
+				} else {
+					equals = false;
 				}
 			}
 		}
+		return equals;
 	}
-	return equalValue;
+
+	private boolean equalValueType(State state) {
+		return (isArrayBaseValue == state.isArrayBaseValue) && (isArrayValue == state.isArrayValue)
+				&& (isNormalValue == state.isNormalValue) && (isReturnValue == state.isReturnValue);
 	}
-	
-	
-	private boolean isParent(SootClass childClass, SootClass fatherClass) {
-		boolean isParent = false;
-		SootClass tempSootClass = childClass;
-		while (tempSootClass.hasSuperclass()) {
-			if (tempSootClass.equals(fatherClass)) {
-				isParent = true;
-				break;
+
+	public boolean allValueFalse() {
+		return !(isArrayBaseValue || isNormalValue || isReturnValue);
+	}
+
+	public void setReturnValue(MethodPlus methodPlus) {
+		isReturnValue = true;
+		this.returnInMethodPlus = methodPlus;
+	}
+
+	public void desetReturnValue() {
+		isReturnValue = false;
+		this.returnInMethodPlus = null;
+		isNormalValue = true;
+	}
+
+	public void desetArrayBaseValue() {
+		isArrayBaseValue = false;
+	}
+
+	public void desetNormalValue() {
+		isNormalValue = false;
+	}
+
+	public void setNormalValue() {
+		isNormalValue = true;
+	}
+
+	public void setArrayBaseValue() {
+		isArrayBaseValue = true;
+	}
+
+	public void updateArrayBase(Value base) {
+//		this.arrayBaseValue = base;
+		if (variable instanceof ArrayRef) {
+			ArrayRef arrayRef = (ArrayRef) variable;
+			if (base instanceof Local) {
+				Local local = (Local) base;
+				arrayRef.setBase(local);
 			}
-			tempSootClass = tempSootClass.getSuperclass();
-		}
-		return isParent;
-	}
-	
-	public boolean equalTo(Object object){
-		if(! (object instanceof State)){
-			return false;
-		}else {
-			State state = (State) object;
-			boolean equals = equalValue(state.getValue(), state.getmethod());
-			return equals;
 		}
 	}
 
-	public String getAttribute() {
-		return attribute;
+	public void setArrayValue(Value base, Value index) {
+//		this.arrayBaseValue = base;
+//		this.arrayIndexValue = index;
+		isArrayValue = true;
 	}
 
-	public void setAttribute(String attribute) {
-		this.attribute = attribute;
-	}
-	
 }

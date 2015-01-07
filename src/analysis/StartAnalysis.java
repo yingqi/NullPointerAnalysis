@@ -39,6 +39,12 @@ public class StartAnalysis {
 //		String fileString = "/home/leo/jfcp/bug.txt";
 //		String sourceString = "/home/leo/jfcp/jfreechart";
 		
+//		String fileString = "/home/leo/mckoi/bug.txt";
+//		String sourceString = "/home/leo/mckoi/mckoidb";
+		
+//		String fileString = "/home/leo/jr/bug.txt";
+//		String sourceString = "/home/leo/jr/jr";
+		
 		String fileString = "/home/leo/fm/bug.txt";
 		String sourceString = "/home/leo/fm/fm";
 		
@@ -112,8 +118,8 @@ public class StartAnalysis {
 		Analysis analysis = new Analysis(stackTrace, sourceString, fileType, time);
 //		System.out.println(new Date().getTime()-time);
 		// create the CFG first and then do analysis
-//		String[] strings = {"com.puppycrawl.tools.checkstyle.TreeWalker","com.puppycrawl.tools.checkstyle.checks.coding.FallThroughCheck"};
-//		analysis.showCFG(strings);
+		String[] strings = {"com.puppycrawl.tools.checkstyle.api.DetailAST","getLastChild"};
+		analysis.showCFG(strings);
 //		analysis.showCFG();
 		System.out.println("CFG created! "+(new Date().getTime()-time));
 		analysis.doAnalysis(stackTrace, time);

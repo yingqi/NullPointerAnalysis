@@ -224,7 +224,7 @@ public class DispatcherFactory implements Dispatcher {
 	public Set<State> copyStates(Set<State> originalStates) {
 		Set<State> newStates = new HashSet<>();
 		for(State state : originalStates){
-			newStates.add(new State(state.getValue(), state.getmethod(), state.getAttribute(), state.getReturnInMethodPlus()));
+			newStates.add(new State(state));
 		}
 		return newStates;
 	}

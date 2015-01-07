@@ -90,9 +90,10 @@ public class CreateAllCFG {
 			sootclass.setApplicationClass();
 			// in the method level
 			for (SootMethod sootMethod : sootMethods) {
-				// System.out.println("Analyze method: "+sootclass.getName()+"."+sootMethod.getName());
+//				 System.out.println("Analyze method: "+sootclass.getName()+"."+sootMethod.getName());
 				if (sootMethod.isConcrete() && sootMethod.getSource() != null && !sootMethod.isJavaLibraryMethod()
 						&& !sootMethod.getName().equals("doMakeObject")
+						&& !sootMethod.getName().equals("")
 						) {
 					try {
 						Body body = sootMethod.retrieveActiveBody();

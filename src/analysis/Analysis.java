@@ -127,56 +127,65 @@ public class Analysis {
 		ComputeNPA computeNPA = new ComputeNPA(dispatcher, stackTrace);
 		Set<UnitPlus> errorUnits = dispatcher.StackTraceElementToUnit(stackTrace, 0);
 		System.out.println("Error Units Number: " + errorUnits.size());
-		Set<State> errorStates = new HashSet<>();
+//		Set<State> errorStates = new HashSet<>();
 		for (UnitPlus errorUnit : errorUnits) {
+			Set<State> errorStates = new HashSet<>();
+			System.out.println("Error Unit: "+errorUnit);
 			List<ValueBox> useBoxs = errorUnit.getUnit().getUseBoxes();
-//			boolean isUnitError = false;
+			boolean isUnitError = false;
 			for (ValueBox useBox : useBoxs) {
 				if (useBox.getValue() instanceof InstanceInvokeExpr) {
-					InstanceInvokeExpr instanceInvokeExpr = (InstanceInvokeExpr) useBox.getValue();
-//					isUnitError = true;
+					InstanceInvokeExpr instanceInvokeExpr = (InstanceInvokeExpr) useBox.getValue();					
 					if ((instanceInvokeExpr.getBase() instanceof Ref)
 							|| (instanceInvokeExpr.getBase() instanceof Immediate)) {
-						errorStates.add(new State(instanceInvokeExpr.getBase(), errorUnit.getMethodPlus(), "", null));
+						isUnitError = true;
+						errorStates.add(new State(instanceInvokeExpr.getBase(), errorUnit.getMethodPlus()));
 					} else {
 						System.out.println("Invalid Base! " + instanceInvokeExpr.getBase());
 					}
 				} else if (useBox.getValue() instanceof InstanceFieldRef) {
-					InstanceFieldRef instanceFieldRef = (InstanceFieldRef) useBox.getValue();
-//					isUnitError = true;
+					InstanceFieldRef instanceFieldRef = (InstanceFieldRef) useBox.getValue();					
 					if (((instanceFieldRef.getBase() instanceof Ref)
 							|| (instanceFieldRef.getBase() instanceof Immediate))
 							&&!instanceFieldRef.getBase().toString().equals("r0")//r0 stands for this object and it could not be null
 							) {
-						errorStates.add(new State(instanceFieldRef.getBase(), errorUnit.getMethodPlus(), "", null));
+						isUnitError = true;
+						errorStates.add(new State(instanceFieldRef.getBase(), errorUnit.getMethodPlus()));
 					} else {
 						System.out.println("Invalid Base! " + instanceFieldRef.getBase());
 					}
 				}
 			}
-		}
-		Iterator<UnitPlus> errorUnitIterator = errorUnits.iterator();
-		UnitPlus analyzeUnitPlus = errorUnitIterator.next();
-		while (errorUnitIterator.hasNext()) {
-			UnitPlus tempUnitPlus = errorUnitIterator.next();
-			List<ValueBox> useBoxs = tempUnitPlus.getUnit().getUseBoxes();
-			boolean isUnitError = false;
-			for (ValueBox useBox : useBoxs) {
-				if ((useBox.getValue() instanceof InstanceInvokeExpr)||(useBox.getValue() instanceof InstanceFieldRef)) {
-				isUnitError = true;
-				}
-			}
 			if(isUnitError){
-				if (analyzeUnitPlus.getNumber() < tempUnitPlus.getNumber()) {
-					analyzeUnitPlus = tempUnitPlus;
-				}
+				System.out.println(System.currentTimeMillis() - time);
+				System.out.println("Error Unit : " + errorUnit+"\nStates : "+errorStates);
+				computeNPA.resetIndexOfStarckTrace();
+				Element errorElement = new Element(errorUnit, errorStates);
+				computeNPA.analyzeMethod(errorElement);
 			}
 		}
-		System.out.println(System.currentTimeMillis() - time);
-		System.out.println("Error Unit : " + analyzeUnitPlus+"\nStates : "+errorStates);
-		computeNPA.resetIndexOfStarckTrace();
-		Element errorElement = new Element(analyzeUnitPlus, errorStates);
-		computeNPA.analyzeMethod(errorElement);
+//		Iterator<UnitPlus> errorUnitIterator = errorUnits.iterator();
+//		UnitPlus analyzeUnitPlus = errorUnitIterator.next();
+//		while (errorUnitIterator.hasNext()) {
+//			UnitPlus tempUnitPlus = errorUnitIterator.next();
+//			List<ValueBox> useBoxs = tempUnitPlus.getUnit().getUseBoxes();
+//			boolean isUnitError = false;
+//			for (ValueBox useBox : useBoxs) {
+//				if ((useBox.getValue() instanceof InstanceInvokeExpr)||(useBox.getValue() instanceof InstanceFieldRef)) {
+//				isUnitError = true;
+//				}
+//			}
+//			if(isUnitError){
+//				if (analyzeUnitPlus.getNumber() < tempUnitPlus.getNumber()) {
+//					analyzeUnitPlus = tempUnitPlus;
+//				}
+//			}
+//		}
+//		System.out.println(System.currentTimeMillis() - time);
+//		System.out.println("Error Unit : " + analyzeUnitPlus+"\nStates : "+errorStates);
+//		computeNPA.resetIndexOfStarckTrace();
+//		Element errorElement = new Element(analyzeUnitPlus, errorStates);
+//		computeNPA.analyzeMethod(errorElement);
 
 		Set<UnitPlus> NPA = computeNPA.getNPA();
 		// show NPA founded
@@ -262,7 +271,7 @@ public class Analysis {
 		Set<UnitPlus> keySet = completeCFG.keySet();
 		for (UnitPlus node : keySet) {
 			if (node.getMethodPlus().getclassName().equals(names[0])
-					|| node.getMethodPlus().getclassName().equals(names[1])) {
+					&& node.getMethodPlus().getMethodName().equals(names[1])) {
 				// show the normal units
 				if (node.getAttribute().equals("")) {
 					// Show the units

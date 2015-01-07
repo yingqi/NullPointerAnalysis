@@ -38,41 +38,75 @@ public class VisitRecord {
 		this.unitAttribute = unitAttribute;
 		this.values = values;
 	}
-	
-	public boolean elementVisited(Element element){
-		boolean elementVisited = element.getUnitPlus().getNumber()==unitNumber
-				&&element.getUnitPlus().getAttribute().equals(unitAttribute);
-		if(elementVisited){
-			for(State state:values){
-				boolean isStateInElement = false;
-				for(State stateInElement:element.getStates()){
-					if(state.equalTo(stateInElement)){
-						isStateInElement = true;
+
+	public boolean elementVisited(Element element) {
+		boolean elementVisited = visited(element.getUnitPlus(), element.getStates());
+		return elementVisited;
+	}
+
+	public boolean visited(UnitPlus unitPlus, Set<State> states) {
+		boolean visited = unitPlus.getNumber() == unitNumber && unitPlus.getAttribute().equals(unitAttribute)
+				&& values.size() == states.size();
+		if (visited) {
+			//all the states are in the values
+			for (State state : states) {
+				boolean isStateInValue = false;
+				for (State stateInValue : values) {
+					if (state.equalTo(stateInValue)) {
+						isStateInValue = true;
 						break;
 					}
 				}
-				if(!isStateInElement){
-					elementVisited = false;
+				if (!isStateInValue) {
+					visited = false;
 					break;
 				}
 			}
-			if(elementVisited){
-				for(State state:element.getStates()){
-					boolean isStateInValue = false;
-					for(State stateInValue:values){
-						if(state.equalTo(stateInValue)){
-							isStateInValue = true;
+		}
+		return visited;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		boolean equals = false;
+		if (!(object instanceof VisitRecord)) {
+
+		} else {
+			VisitRecord visitRecord = (VisitRecord) object;
+			equals = visitRecord.getUnitNumber() == unitNumber && visitRecord.getUnitAttribute().equals(unitAttribute)
+					&& values.size() == visitRecord.getValues().size();
+			if (equals) {
+				for (State state : values) {
+					boolean isStateInElement = false;
+					for (State stateInElement : visitRecord.getValues()) {
+						if (state.equalTo(stateInElement)) {
+							isStateInElement = true;
 							break;
 						}
 					}
-					if(!isStateInValue){
-						elementVisited = false;
+					if (!isStateInElement) {
+						equals = false;
 						break;
+					}
+				}
+				if (equals) {
+					for (State state : visitRecord.getValues()) {
+						boolean isStateInValue = false;
+						for (State stateInValue : values) {
+							if (state.equalTo(stateInValue)) {
+								isStateInValue = true;
+								break;
+							}
+						}
+						if (!isStateInValue) {
+							equals = false;
+							break;
+						}
 					}
 				}
 			}
 		}
-		return elementVisited;
+		return equals;
 	}
 
 }

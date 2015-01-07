@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import dispatcher.LightDispatcher;
 import soot.Immediate;
 import soot.RefType;
 import soot.Value;
+import soot.jimple.ArrayRef;
 import soot.jimple.CastExpr;
 import soot.jimple.Constant;
 import soot.jimple.InstanceFieldRef;
@@ -33,7 +35,7 @@ public class Element
 {
 	private UnitPlus unitPlus;
 	private Set<State> states;
-//	private boolean isVisited;
+	private LightDispatcher lightDispatcher;
 	
 	/**
 	 * constructor for multiple states
@@ -42,12 +44,12 @@ public class Element
 	 */
 	public Element(UnitPlus unitPlus, Set<State> states)
 	{
+		lightDispatcher = new LightDispatcher();
 		this.unitPlus=unitPlus;
 		this.states = new HashSet<>();
 		for(State state:states){
-			this.states.add(new State(state.getValue(), state.getmethod(), state.getAttribute(), state.getReturnInMethodPlus()));
+			this.states.add(new State(state));
 		}
-//		isVisited =false;
 	}
 	
 
@@ -81,52 +83,44 @@ public class Element
 			Value rightOp = ads.getRightOp();
 			Set<State> addStates = new HashSet<>();
 			Set<State> removeStates = new HashSet<>();
-//			State tempState = null;
-//			State transformedState = null;
 			for(State state: states){
 				if(state.equalValue(leftValue, unitPlus.getMethodPlus())) {
-//					System.out.println(states);
 					if(rightOp instanceof NullConstant){
-						if(!NPA.contains(unitPlus)){
-							NPA.add(unitPlus);
-							System.out.println("NullAssignNPA:  " + unitPlus);
-						}
-						removeStates.add(state);
+						lightDispatcher.AddNPA(state, unitPlus, NPA, states, removeStates);
 					}else {
 						if(rightOp instanceof Constant){
-//							PossibleNPAs.add(unitPlus);
 							removeStates.add(state);
 						}else if((rightOp instanceof Ref) ||(rightOp instanceof Immediate)){
-							stateReplace(state, rightOp, unitPlus, removeStates);
+							lightDispatcher.stateReplace(state, rightOp, unitPlus, states, removeStates, addStates);
 						}else if(rightOp instanceof InvokeExpr){
 							// for those invokes which methods are not analyzed
 							InvokeExpr InvokeExpr = (InvokeExpr) rightOp;
 							if(!InvokeExpr.getMethod().isJavaLibraryMethod()){
-								if(!PossibleNPAs.contains(unitPlus)){
-									PossibleNPAs.add(unitPlus);
-									System.out.println("PossibleNPA:  " + unitPlus);
-								}
+								lightDispatcher.AddNPA(state, unitPlus, PossibleNPAs, states, removeStates);
+							}else {
+								removeStates.add(state);
 							}
-//							removeStates.add(state);
 //							addStates(addStates, states, instanceInvokeExpr.getBase(), unitPlus.getMethodPlus());
 						}else if(rightOp instanceof InstanceFieldRef){
 //							InstanceFieldRef instanceFieldRef = (InstanceFieldRef) rightOp;
-							stateReplace(state, rightOp, unitPlus, removeStates);
+							lightDispatcher.stateReplace(state, rightOp, unitPlus, states, removeStates, addStates);
 //							addStates(addStates, states, instanceFieldRef.getBase(), unitPlus.getMethodPlus());
 						}else if((rightOp instanceof NewExpr)){
 							NewExpr newExpr = (NewExpr) rightOp;
-							removeStates.add(state);
 							if(!newExpr.getBaseType().getSootClass().isJavaLibraryClass()){
-								if(!PossibleNPAs.contains(unitPlus)){
-									PossibleNPAs.add(unitPlus);
-									System.out.println("PossibleNPA:  " + unitPlus);
-								}
+								lightDispatcher.AddNPA(state, unitPlus, PossibleNPAs, states, removeStates);
+							}else {
+								removeStates.add(state);
 							}
 						}else if((rightOp instanceof NewArrayExpr)||(rightOp instanceof NewMultiArrayExpr)){
-								removeStates.add(state);
+							lightDispatcher.AddNPA(state, unitPlus, PossibleNPAs, states, removeStates);
 						}else if(rightOp instanceof CastExpr){
 							CastExpr castExpr = (CastExpr) rightOp;
-							stateReplace(state, castExpr.getOp(), unitPlus, removeStates);
+							if(castExpr.getOp() instanceof NullConstant){
+								lightDispatcher.AddNPA(state, unitPlus, NPA, states, removeStates);
+							}else {
+								lightDispatcher.stateReplace(state, castExpr.getOp(), unitPlus, states, removeStates, addStates);
+							}
 						}else {
 							System.out.println("Error: Expr in Trasform Statement "+rightOp);
 						}
@@ -138,7 +132,6 @@ public class Element
 					}
 				}
 			}
-			
 			for(State state:addStates){
 				states.add(state);
 			}
@@ -148,40 +141,13 @@ public class Element
 		}
 	}
 	
-	private void stateReplace(State state, Value value, UnitPlus unitPlus, Set<State> removeStates){
-//		Set<State> newStates = new HashSet<>();
-//		if (state.replaceValue(value, unitPlus.getMethodPlus())==null) {
-//			removeStates.add(state);
-//		}else {
-//			newStates.add(new State(value, methodPlus));
-//			for(State state2:states){
-//				if(!state2.equalTo(state)){
-//					newStates.add(state2);
-//				}
-//			}
-//		}
-//		states = newStates;
-		state.replaceValue(value, unitPlus);
-	}
-	
-//	private void addStates(Set<State> addStates, Set<State> states, Value base, MethodPlus methodPlus){
-//		boolean baseAnalyzed = false;
-//		for(State state:states){
-//			if(state.equalValue(base, methodPlus)){
-//				baseAnalyzed = true;
-//			}
-//		}
-//		if(!baseAnalyzed){
-//			addStates.add(new State(base, methodPlus));
-//		}
-//	}
 	
 	@Override
 	public String toString(){
 		String toString ="UnitPlus: "+unitPlus.getNumber()+unitPlus.getAttribute()+'\t'+unitPlus.getMethodPlus().getclassName()+"."+unitPlus.getMethodPlus().getMethodName()+" "+unitPlus.getUnit()+'\t'+"State: "+states.size()+" ";
 		
 		for(State state:states){
-			toString+=state.getValue().toString()+" "+state.getAttribute()+" ";
+			toString+=state.getVariable().toString()+" "+" ";
 		}
 		return toString;
 	}
@@ -212,6 +178,48 @@ public class Element
 			}
 			return equals;
 		}
+	}
+	
+	public boolean equalTo(Object object){
+		boolean equalTo = false;
+		if(! (object instanceof Element)){
+			equalTo = false;
+		}else {
+			Element element = (Element) object;
+			equalTo = states.size()==element.getStates().size()
+					&&unitPlus.equals(element.getUnitPlus());
+			if(equalTo){
+				for(State state:states){
+					boolean isStateInElement = false;
+					for(State stateInElement:element.getStates()){
+						if(state.equalTo(stateInElement)){
+							isStateInElement = true;
+							break;
+						}
+					}
+					if(!isStateInElement){
+						equalTo = false;
+						break;
+					}
+				}
+				if(equalTo){
+					for(State state:element.getStates()){
+						boolean isStateInValue = false;
+						for(State stateInValue:states){
+							if(state.equalTo(stateInValue)){
+								isStateInValue = true;
+								break;
+							}
+						}
+						if(!isStateInValue){
+							equalTo = false;
+							break;
+						}
+					}
+				}
+			}
+		}
+		return equalTo;
 	}
 
 
