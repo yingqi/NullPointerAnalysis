@@ -32,6 +32,7 @@ import soot.jimple.Ref;
 import soot.jimple.StaticInvokeExpr;
 import soot.jimple.internal.AbstractDefinitionStmt;
 import soot.jimple.internal.JInvokeStmt;
+import soot.jimple.internal.JimpleLocal;
 import soot.toolkits.graph.ExceptionalUnitGraphPlus;
 import soot.toolkits.graph.UnitGraphPlus;
 import soot.util.Chain;
@@ -93,7 +94,6 @@ public class CreateAllCFG {
 //				 System.out.println("Analyze method: "+sootclass.getName()+"."+sootMethod.getName());
 				if (sootMethod.isConcrete() && sootMethod.getSource() != null && !sootMethod.isJavaLibraryMethod()
 						&& !sootMethod.getName().equals("doMakeObject")
-						&& !sootMethod.getName().equals("")
 						) {
 					try {
 						Body body = sootMethod.retrieveActiveBody();
@@ -245,6 +245,17 @@ public class CreateAllCFG {
 		Set<MethodPlus> calledMethodSet = new HashSet<>();
 		SootMethod sootMethod = invokeExpr.getMethod();
 		SootClass invokeSootClass = sootMethod.getDeclaringClass();
+//		if(invokeExpr instanceof InstanceInvokeExpr){
+//			InstanceInvokeExpr instanceInvokeExpr = (InstanceInvokeExpr) invokeExpr;
+//			if(instanceInvokeExpr.toString().contains("interfaceinvoke $r1.<internal.Int: int getInt()>()")){
+//				System.out.println(instanceInvokeExpr.getBase()+"\t"+instanceInvokeExpr.getBase().getType());
+//				Value base = instanceInvokeExpr.getBase();
+//				if(base instanceof JimpleLocal){
+//					JimpleLocal jimpleLocal = (JimpleLocal) base;
+//					System.out.println(jimpleLocal.getClass());
+//				}
+//			}
+//		}
 		if(!sootMethod.isJavaLibraryMethod()){
 			if(invokeSootClass.isInterface()){
 				for (MethodPlus methodPlusTemp : methodToUnitGraph.keySet()) {
@@ -279,17 +290,18 @@ public class CreateAllCFG {
 					}
 				}
 			}else if(invokeSootClass.isAbstract()){
-//				boolean isMethodInAbstractClass = false;
+				boolean isMethodInAbstractClass = false;
 //				for (MethodPlus methodPlusTemp : methodToUnitGraph.keySet()) {
 //					if (methodPlusTemp.equalTo(sootMethod)) {
 //						SootClass methodSootClass = methodPlusTemp.getSootClass();
-//						if (methodSootClass.equals(invokeSootClass)) {
+//						if (methodSootClass.equals(invokeSootClass)
+//								&&sootMethod.getActiveBody().getUnits().size()!=0) {
 //							isMethodInAbstractClass = true;
 //							calledMethodSet.add(methodPlusTemp);
 //						}
 //					}
 //				}
-//				if(!isMethodInAbstractClass){
+				if(!isMethodInAbstractClass){
 					for (MethodPlus methodPlusTemp : methodToUnitGraph.keySet()) {
 						if (methodPlusTemp.equalTo(sootMethod)) {
 							SootClass methodSootClass = methodPlusTemp.getSootClass();
@@ -299,7 +311,7 @@ public class CreateAllCFG {
 							}
 						}
 					}
-//				}
+				}
 			}else {
 				System.out.println("Error class: "+invokeSootClass);
 			}

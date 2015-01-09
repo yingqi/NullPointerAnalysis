@@ -5,129 +5,196 @@ import internal.State;
 import internal.UnitPlus;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import java_cup.internal_error;
+import soot.Body;
+import soot.PatchingChain;
+import soot.Scene;
+import soot.SootClass;
+import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
+import soot.ValueBox;
+import soot.jimple.InvokeExpr;
+import soot.jimple.internal.AbstractDefinitionStmt;
+import soot.jimple.internal.AbstractInvokeExpr;
+import soot.jimple.internal.BeginStmt;
+import soot.jimple.internal.EndStmt;
+import soot.jimple.internal.JInvokeStmt;
+import soot.tagkit.LineNumberTag;
+import soot.tagkit.Tag;
+import soot.toolkits.graph.UnitGraph;
 import soot.toolkits.graph.UnitGraphPlus;
+import soot.util.Chain;
 
 /**
+ * class which implements the interface Dispathcer. Warning the
  * 
  * @author Yingqi
  *
  */
-public interface Dispatcher {
-	/**
-	 * gets the predecessors of a unit in a complete control flow graph with all
-	 * methods
-	 * 
-	 * @param unit
-	 * @return
-	 */
-	public Set<UnitPlus> getPredecessors(UnitPlus unitPlus);
+public class Dispatcher {
+	private Map<UnitPlus, Set<UnitPlus>> completeCFG;
+	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
+
+	public Dispatcher(Map<UnitPlus, Set<UnitPlus>> completeCFG,
+			StackTraceElement[] stackTrace,
+			Map<MethodPlus, UnitGraphPlus> methodToUnitGraph) {
+		this.completeCFG = completeCFG;
+		this.methodToUnitGraph = methodToUnitGraph;
+	}
+
+//	@Override
+	public Set<UnitPlus> getPredecessors(UnitPlus unitPlus) {
+		Set<UnitPlus> preds = null;
+		Set<UnitPlus> keys = completeCFG.keySet();
+		for (UnitPlus key : keys) {
+			if (key.getNumber() == unitPlus.getNumber()) {
+				if (key.getAttribute().equals(unitPlus.getAttribute())) {
+					preds = completeCFG.get(key);
+				}
+			}
+		}
+		return preds;
+	}
+
+//	@Override
+	public UnitPlus getExitUnitPlus(MethodPlus Method) {
+		UnitPlus tailUnitPlus = null;
+		Unit tailUnit = methodToUnitGraph.get(Method).getTail();
+		Set<UnitPlus> keys = completeCFG.keySet();
+		for (UnitPlus key : keys) {
+			if (key.getUnit().equals(tailUnit))
+				tailUnitPlus = key;
+		}
+		return tailUnitPlus;
+	}
+
+//	@Override
+	public UnitPlus getEntryUnitPlus(MethodPlus Method) {
+		UnitPlus headUnitPlus = null;
+		Unit headUnit = methodToUnitGraph.get(Method).getHead();
+		Set<UnitPlus> keys = completeCFG.keySet();
+		for (UnitPlus key : keys) {
+			if (key.getUnit().equals(headUnit))
+				headUnitPlus = key;
+		}
+		return headUnitPlus;
+	}
+
+//	@Override
+//	public MethodPlus getMethod(UnitPlus unitPlus) {
+//		return unitPlus.getMethodPlus();
+//	}
+
+//	@Override
+	
+
+//	@Override
+//	public boolean isCall(UnitPlus unitPlus) {
+//		return unitPlus.isCall();
+//	}
+
+//	@Override
+	public Set<UnitPlus> StackTraceElementToUnit(
+			StackTraceElement[] stackTrace, int indexOfStackTrace) {
+		Set<UnitPlus> units = new HashSet<>();
+		StackTraceElement ste = stackTrace[indexOfStackTrace];
+		String methodName = ste.getMethodName();
+		String classname = ste.getClassName();
+		int lineNumber = ste.getLineNumber();
+		units.addAll(lineNumberToUnit(methodName, classname, lineNumber));
+		return units;
+	}
 
 	/**
-	 * gets the call site based on the stack trace There are two choices. If the
-	 * method overload is considered, then the first element of the list is the
-	 * calling method. The second choice is to get all the methods which share
-	 * the same name of the calling method.
-	 * 
-	 * @param unit
-	 * @param stackTrace
+	 * Transfer line number to its units
+	 * @param sootMethod
+	 * @param lineNumber
 	 * @return
-	 * @throws ClassNotFoundException 
-	 * @throws FileNotFoundException 
 	 */
+	private List<UnitPlus> lineNumberToUnit(String methodName, String className, 
+			int lineNumber) {
+		List<UnitPlus> units = new ArrayList<>();
+		Set<UnitPlus> unitPluses = completeCFG.keySet();
+		for (UnitPlus unitPlus : unitPluses) {
+			Unit unit = unitPlus.getUnit();
+			List<Tag> tags = unit.getTags();
+			for (Tag tag : tags) {
+				if (tag instanceof LineNumberTag) {
+					LineNumberTag lineNumberTag = (LineNumberTag) tag;
+					if (lineNumber == lineNumberTag.getLineNumber()
+							&&unitPlus.getMethodPlus().getclassName().equals(className)
+							&&unitPlus.getMethodPlus().getMethodName().equals(methodName)
+							//to ensure that caller a and caller b is not reviewed twice
+							//to ensure that do not go into the useless method inside
+							&&!unitPlus.getAttribute().equals("b")) {
+						units.add(unitPlus);
+					}
+				}
+			}
+		}
+		
+		return units;
+	}
+	
+//	@Override
+
+
+//	@Override
+	public Map<MethodPlus, UnitGraphPlus> getMethodToUnitGraphPlus() {
+		return methodToUnitGraph;
+	}
+
+
+//	@Override
 	public UnitPlus getStackTraceCallSiteOfMethod(MethodPlus methodPlus,
-			StackTraceElement[] stackTrace, int indexOfStackTrace) throws ClassNotFoundException, FileNotFoundException;
+			StackTraceElement[] stackTrace, int indexOfStackTrace)
+			throws ClassNotFoundException, FileNotFoundException {
+		UnitPlus callSite = null;
+		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
+//		System.out.println("stackTraceElement: "+stackTraceElement);
+		// get all call sites of this method
+		Set<UnitPlus> preds = this.getPredecessors(this
+				.getEntryUnitPlus(methodPlus));
+//		System.out.println("Entry: "+this .getEntryUnitPlus(methodPlus));
+		// check which call site fit the stack trace
+		for (UnitPlus pred : preds) {
+//			System.out.println("Call Site Pred: "+pred);
+			List<Tag> tags =pred.getUnit().getTags();
+			for(Tag tag:tags){
+				if(tag instanceof LineNumberTag){
+					LineNumberTag lineNumberTag = (LineNumberTag) tag;
+//					System.out.println("LineNumber: "+lineNumberTag.getLineNumber());
+					if(stackTraceElement.getLineNumber()==lineNumberTag.getLineNumber()){
+						callSite = pred;
+					}
+				}
+			}
+		}
+		return callSite;
 
-	/**
-	 * gets the exit units of a method
-	 * 
-	 * @param methodName
-	 * @return
-	 */
-	public UnitPlus getExitUnitPlus(MethodPlus rteMethod);
-	
-	/**
-	 * gets the entry units of a method
-	 * 
-	 * @param methodName
-	 * @return
-	 */
-	public UnitPlus getEntryUnitPlus(MethodPlus rteMethod);
+	}
 
-	/**
-	 * get method name where the unit belongs
-	 * 
-	 * @return
-	 */
-	public MethodPlus getMethod(UnitPlus unitPlus);
+//	@Override
+	public UnitPlus getCallSitePred(UnitPlus callB) {
+		UnitPlus callA =null;
+		Set<UnitPlus> keys = completeCFG.keySet();
+		for(UnitPlus key:keys){
+			if(key.getAttribute().equals("a")&&key.getNumber()==callB.getNumber()){
+				callA = key;
+			}
+		}
+		return callA;
+	}
 
-	/**
-	 * return true if the unit is a unit in other methods that call this method.
-	 * As there is no entry in the unit graph, so we have to use call sites(the
-	 * first call sites) to represent entries i.e. 24a, 10a.
-	 * 
-	 * @param unit
-	 * @return
-	 */
-	public boolean isEntry(UnitPlus unitPlus);
+//	@Overrcide
 
-	/**
-	 * return true if the unit is a unit that call other methods. We have to use
-	 * call sites(the second call sites) to represent entries i.e. 24b, 10b.
-	 * 
-	 * @param unit
-	 * @return
-	 */
-	public boolean isCall(UnitPlus unitPlus);
-	
-	/**
-	 * return true if the unit is a definition unit or identity statement.
-	 * 
-	 * @param unit
-	 * @return
-	 */
-	public boolean isTransform(UnitPlus unitPlus);
-	
-	/**
-	 * get relationship between method plus and unit graph plus
-	 * @return
-	 */
-	public Map<MethodPlus, UnitGraphPlus> getMethodToUnitGraphPlus();
-	
-	/**
-	 * get relationship between stack trace element and unit
-	 * @param stackTrace
-	 * @param indexOfStackTrace
-	 * @return
-	 */
-	public Set<UnitPlus> StackTraceElementToUnit(StackTraceElement[] stackTrace, int indexOfStackTrace);
-	
-	/**
-	 * get caller a for assigned caller b
-	 * @param callB
-	 * @return
-	 */
-	public UnitPlus getCallSitePred(UnitPlus callB);
-	
-	/**
-	 * To determine whether the unitplus is the tail of a method
-	 * @param unitPlus
-	 * @return
-	 */
-	public boolean isTailOfMethod(UnitPlus unitPlus);
-	
-	/**
-	 * Copy a list of new states
-	 * @param originalStates
-	 * @return
-	 */
-	public Set<State> copyStates(Set<State> originalStates);
-	
+
+//	@Overcride
 	
 }

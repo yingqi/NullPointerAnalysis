@@ -17,7 +17,8 @@ import java.util.Set;
 
 import dispatcher.CreateAllCFG;
 import dispatcher.Dispatcher;
-import dispatcher.DispatcherFactory;
+import dispatcher.Dispatcher;
+import dispatcher.LightDispatcher;
 import analysis.ComputeNPA;
 import soot.Immediate;
 import soot.Scene;
@@ -123,7 +124,7 @@ public class Analysis {
 	 */
 	public void doAnalysis(StackTraceElement[] stackTrace, long time) throws ClassNotFoundException,
 			FileNotFoundException {
-		dispatcher = new DispatcherFactory(completeCFG, stackTrace, methodToUnitGraph);
+		dispatcher = new Dispatcher(completeCFG, stackTrace, methodToUnitGraph);
 		ComputeNPA computeNPA = new ComputeNPA(dispatcher, stackTrace);
 		Set<UnitPlus> errorUnits = dispatcher.StackTraceElementToUnit(stackTrace, 0);
 		System.out.println("Error Units Number: " + errorUnits.size());

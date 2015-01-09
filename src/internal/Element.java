@@ -35,7 +35,6 @@ public class Element
 {
 	private UnitPlus unitPlus;
 	private Set<State> states;
-	private LightDispatcher lightDispatcher;
 	
 	/**
 	 * constructor for multiple states
@@ -44,7 +43,6 @@ public class Element
 	 */
 	public Element(UnitPlus unitPlus, Set<State> states)
 	{
-		lightDispatcher = new LightDispatcher();
 		this.unitPlus=unitPlus;
 		this.states = new HashSet<>();
 		for(State state:states){
@@ -86,40 +84,40 @@ public class Element
 			for(State state: states){
 				if(state.equalValue(leftValue, unitPlus.getMethodPlus())) {
 					if(rightOp instanceof NullConstant){
-						lightDispatcher.AddNPA(state, unitPlus, NPA, states, removeStates);
+						LightDispatcher.AddNPA(state, unitPlus, NPA, states, removeStates);
 					}else {
 						if(rightOp instanceof Constant){
 							removeStates.add(state);
 						}else if((rightOp instanceof Ref) ||(rightOp instanceof Immediate)){
-							lightDispatcher.stateReplace(state, rightOp, unitPlus, states, removeStates, addStates);
+							LightDispatcher.stateReplace(state, rightOp, unitPlus, states, removeStates, addStates);
 						}else if(rightOp instanceof InvokeExpr){
 							// for those invokes which methods are not analyzed
 							InvokeExpr InvokeExpr = (InvokeExpr) rightOp;
 							if(!InvokeExpr.getMethod().isJavaLibraryMethod()){
-								lightDispatcher.AddNPA(state, unitPlus, PossibleNPAs, states, removeStates);
+								LightDispatcher.AddNPA(state, unitPlus, PossibleNPAs, states, removeStates);
 							}else {
 								removeStates.add(state);
 							}
 //							addStates(addStates, states, instanceInvokeExpr.getBase(), unitPlus.getMethodPlus());
 						}else if(rightOp instanceof InstanceFieldRef){
 //							InstanceFieldRef instanceFieldRef = (InstanceFieldRef) rightOp;
-							lightDispatcher.stateReplace(state, rightOp, unitPlus, states, removeStates, addStates);
+							LightDispatcher.stateReplace(state, rightOp, unitPlus, states, removeStates, addStates);
 //							addStates(addStates, states, instanceFieldRef.getBase(), unitPlus.getMethodPlus());
 						}else if((rightOp instanceof NewExpr)){
 							NewExpr newExpr = (NewExpr) rightOp;
 							if(!newExpr.getBaseType().getSootClass().isJavaLibraryClass()){
-								lightDispatcher.AddNPA(state, unitPlus, PossibleNPAs, states, removeStates);
+								LightDispatcher.AddNPA(state, unitPlus, PossibleNPAs, states, removeStates);
 							}else {
 								removeStates.add(state);
 							}
 						}else if((rightOp instanceof NewArrayExpr)||(rightOp instanceof NewMultiArrayExpr)){
-							lightDispatcher.AddNPA(state, unitPlus, PossibleNPAs, states, removeStates);
+							LightDispatcher.AddNPA(state, unitPlus, PossibleNPAs, states, removeStates);
 						}else if(rightOp instanceof CastExpr){
 							CastExpr castExpr = (CastExpr) rightOp;
 							if(castExpr.getOp() instanceof NullConstant){
-								lightDispatcher.AddNPA(state, unitPlus, NPA, states, removeStates);
+								LightDispatcher.AddNPA(state, unitPlus, NPA, states, removeStates);
 							}else {
-								lightDispatcher.stateReplace(state, castExpr.getOp(), unitPlus, states, removeStates, addStates);
+								LightDispatcher.stateReplace(state, castExpr.getOp(), unitPlus, states, removeStates, addStates);
 							}
 						}else {
 							System.out.println("Error: Expr in Trasform Statement "+rightOp);

@@ -137,12 +137,16 @@ public class UnitPlus {
 		return toString;
 	}
 	
-	@Override public boolean equals(Object object){
+	@Override 
+	public boolean equals(Object object){
 		if(! (object instanceof UnitPlus)){
 			return false;
 		}else {
 			UnitPlus unitPlus = (UnitPlus) object;
 			return numberInteger==unitPlus.getNumber()&&attributeString.equals(unitPlus.getAttribute());
 		}
+	}
+	public boolean equalTo(UnitPlus unitPlus){	
+		return numberInteger==unitPlus.getNumber()&&attributeString.equals(unitPlus.getAttribute());
 	}
 }

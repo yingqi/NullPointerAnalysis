@@ -4,6 +4,7 @@ import internal.MethodPlus;
 import internal.State;
 import internal.UnitPlus;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import soot.Immediate;
@@ -15,9 +16,11 @@ import soot.jimple.ArrayRef;
 import soot.jimple.Expr;
 import soot.jimple.InstanceFieldRef;
 import soot.jimple.Ref;
+import soot.jimple.internal.AbstractDefinitionStmt;
+import soot.jimple.internal.BeginStmt;
 
 public class LightDispatcher {
-	public void stateReplace(State state, Value value, UnitPlus unitPlus, Set<State> states, Set<State> removeStates,
+	public static void stateReplace(State state, Value value, UnitPlus unitPlus, Set<State> states, Set<State> removeStates,
 			Set<State> addStates) {
 		State tempState = stateReplaceHelper(state, value, unitPlus, states, removeStates);
 		if (tempState != null) {
@@ -25,7 +28,7 @@ public class LightDispatcher {
 		}
 	}
 
-	private State stateReplaceHelper(State state, Value value, UnitPlus unitPlus, Set<State> states,
+	private static State stateReplaceHelper(State state, Value value, UnitPlus unitPlus, Set<State> states,
 			Set<State> removeStates) {
 		State addState = null;
 		boolean isNewStateInStates = false;
@@ -106,7 +109,7 @@ public class LightDispatcher {
 	}
 	
 	
-	public void AddNPA(State state, UnitPlus unitPlus, Set<UnitPlus> NPA, Set<State> states, Set<State> removeStates){
+	public static void AddNPA(State state, UnitPlus unitPlus, Set<UnitPlus> NPA, Set<State> states, Set<State> removeStates){
 		if(!NPA.contains(unitPlus)){
 			NPA.add(unitPlus);
 			System.out.println("Possible NPA: " + unitPlus);
@@ -125,7 +128,7 @@ public class LightDispatcher {
 	}
 	
 	
-	public boolean equalTwoValues(Value value1, MethodPlus methodPlus1, Value value2, MethodPlus methodPlus2) {
+	public static boolean equalTwoValues(Value value1, MethodPlus methodPlus1, Value value2, MethodPlus methodPlus2) {
 		boolean equalValue = false;
 		if (value2 instanceof Expr) {
 			if (value2.toString().equals(value1.toString())) {
@@ -134,7 +137,6 @@ public class LightDispatcher {
 			equalValue = false;
 		} else if (value2 instanceof Immediate) {
 			equalValue = value2.equals(value1) && methodPlus1.equals(methodPlus2);
-			;
 		} else if (value2 instanceof Ref) {
 			Ref ref2 = (Ref) value2;
 			if (value1 instanceof Ref) {
@@ -147,7 +149,7 @@ public class LightDispatcher {
 		return equalValue;
 	}
 	
-	private boolean equalRef(Ref ref1, Ref ref2, MethodPlus methodPlus1, MethodPlus methodPlus2) {
+	private static boolean equalRef(Ref ref1, Ref ref2, MethodPlus methodPlus1, MethodPlus methodPlus2) {
 		boolean equalRef = false;
 		if (ref2 instanceof ArrayRef) {
 			if (ref1 instanceof ArrayRef) {
@@ -179,12 +181,19 @@ public class LightDispatcher {
 											|| (!valueBaseSootClass1.getFields().contains(valueField2))) {
 										equalRef = isParent(valueBaseSootClass1, valueBaseSootClass2)
 												|| isParent(valueBaseSootClass2, valueBaseSootClass1);
+									}else {
+										equalRef = false;
 									}
 								}else {
 									equalRef = false;
 								}
+							}else {
+								equalRef = false;
 							}
+						}else {
+							equalRef = false;
 						}
+						
 					}else {
 						equalRef = false;
 					}
@@ -194,12 +203,12 @@ public class LightDispatcher {
 		return equalRef;
 	}
 
-	private boolean equalArrayValue(Value base1, Value base2, Value index1, Value index2, MethodPlus methodPlus1, MethodPlus methodPlus2) {;
+	private static boolean equalArrayValue(Value base1, Value base2, Value index1, Value index2, MethodPlus methodPlus1, MethodPlus methodPlus2) {;
 		return equalTwoValues(base1, methodPlus1, base2, methodPlus2)
 				&&index1.toString().equals(index2.toString());
 	}
 
-	private boolean isParent(SootClass childClass, SootClass fatherClass) {
+	private static boolean isParent(SootClass childClass, SootClass fatherClass) {
 		boolean isParent = false;
 		SootClass tempSootClass = childClass;
 		while (tempSootClass.hasSuperclass()) {
@@ -211,6 +220,37 @@ public class LightDispatcher {
 		}
 		return isParent;
 	}
+	
+	public static Set<State> copyStates(Set<State> originalStates) {
+		Set<State> newStates = new HashSet<>();
+		for(State state : originalStates){
+			newStates.add(new State(state));
+		}
+		return newStates;
+	}
 
+	public static boolean isTransform(UnitPlus unitPlus) {
+		boolean isTransform = false;
+		if (unitPlus.getUnit() instanceof AbstractDefinitionStmt) {
+			isTransform = true;
+//			AbstractDefinitionStmt abstractDefinitionStmt = (AbstractDefinitionStmt) unitPlus.getUnit();
+//			Value rightValue = abstractDefinitionStmt.getRightOp();
+			// Regardless of whether right value is invoke expression, as long as it is not call
+			// the unit is a transform
+			if(unitPlus.isCall()){
+				isTransform = false;
+			}
+		}
+		return isTransform;
+	}
+	
+	public static boolean isEntry(UnitPlus unitPlus) {
+		boolean isEntry = false;
+		if (unitPlus.getUnit() instanceof BeginStmt) {
+			isEntry = true;
+		}
+		return isEntry;
+	}
 
+	
 }

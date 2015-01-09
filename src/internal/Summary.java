@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import dispatcher.LightDispatcher;
+
 /**
  * help to map the incoming state to outgoing state
  */

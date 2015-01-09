@@ -16,7 +16,7 @@ import soot.jimple.Expr;
 public class State {
 	private Value variable;
 	// private String attribute;
-	private LightDispatcher lightDispatcher;
+//	private LightDispatcher lightDispatcher;
 	private MethodPlus methodPlus;
 	private MethodPlus returnInMethodPlus;
 //	private Value baseValue;
@@ -84,7 +84,6 @@ public class State {
 	 * @param initValue
 	 */
 	public State(State state) {
-		lightDispatcher = new LightDispatcher();
 		isNormalValue = state.isNormalValue();
 		isArrayValue = state.isArrayValue();
 		isArrayBaseValue = state.isArrayBaseValue();
@@ -100,7 +99,6 @@ public class State {
 	}
 
 	public State(Value initValue, MethodPlus methodPlus) {
-		lightDispatcher = new LightDispatcher();
 		isNormalValue = true;
 		isArrayValue = false;
 		isArrayBaseValue = false;
@@ -147,16 +145,16 @@ public class State {
 		if (value instanceof Expr) {
 			System.out.println("Error value cannot be replaced with Expr: " + value);
 		} else {
-			System.out.println("Value Replace In: " + unitPlus);
-			System.out.println("Value Replace: " + this.methodPlus + " " + variable + "\tto "
-					+ unitPlus.getMethodPlus() + " " + value);
+//			System.out.println("Value Replace In: " + unitPlus);
+//			System.out.println("Value Replace: " + this.methodPlus + " " + variable + "\tto "
+//					+ unitPlus.getMethodPlus() + " " + value);
 			variable = value;
 			this.methodPlus = unitPlus.getMethodPlus();
 		}
 	}
 
 	public boolean equalValue(Value value, MethodPlus methodPlus){
-		return lightDispatcher.equalTwoValues(variable, this.methodPlus, value, methodPlus);
+		return LightDispatcher.equalTwoValues(variable, this.methodPlus, value, methodPlus);
 	}
 	
 	/**
