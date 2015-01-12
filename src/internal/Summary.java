@@ -2,6 +2,7 @@ package internal;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import dispatcher.LightDispatcher;
@@ -16,6 +17,9 @@ import dispatcher.LightDispatcher;
  */
 public class Summary {
 	
+//	private Map<MethodPlus, List<StateRecord>> informationMap;
+	
+	private List<Record> information;
 	/**
 	 * constructor
 	 */
@@ -50,6 +54,4 @@ public class Summary {
 	{	
 		information.add(new Record(methodPlus,incomingStates,outgoingStates));
 	}
-	
-	private List<Record> information;
 }

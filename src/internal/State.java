@@ -145,9 +145,9 @@ public class State {
 		if (value instanceof Expr) {
 			System.out.println("Error value cannot be replaced with Expr: " + value);
 		} else {
-//			System.out.println("Value Replace In: " + unitPlus);
-//			System.out.println("Value Replace: " + this.methodPlus + " " + variable + "\tto "
-//					+ unitPlus.getMethodPlus() + " " + value);
+			System.out.println("Value Replace In: " + unitPlus);
+			System.out.println("Value Replace: " + this.methodPlus + " " + variable + "\tto "
+					+ unitPlus.getMethodPlus() + " " + value);
 			variable = value;
 			this.methodPlus = unitPlus.getMethodPlus();
 		}

@@ -38,10 +38,10 @@ import soot.util.Chain;
  *
  */
 public class Dispatcher {
-	private Map<UnitPlus, Set<UnitPlus>> completeCFG;
+	private Map<UnitPlus, List<UnitPlus>> completeCFG;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
 
-	public Dispatcher(Map<UnitPlus, Set<UnitPlus>> completeCFG,
+	public Dispatcher(Map<UnitPlus, List<UnitPlus>> completeCFG,
 			StackTraceElement[] stackTrace,
 			Map<MethodPlus, UnitGraphPlus> methodToUnitGraph) {
 		this.completeCFG = completeCFG;
@@ -49,8 +49,8 @@ public class Dispatcher {
 	}
 
 //	@Override
-	public Set<UnitPlus> getPredecessors(UnitPlus unitPlus) {
-		Set<UnitPlus> preds = null;
+	public List<UnitPlus> getPredecessors(UnitPlus unitPlus) {
+		List<UnitPlus> preds = null;
 		Set<UnitPlus> keys = completeCFG.keySet();
 		for (UnitPlus key : keys) {
 			if (key.getNumber() == unitPlus.getNumber()) {
@@ -107,6 +107,7 @@ public class Dispatcher {
 		String methodName = ste.getMethodName();
 		String classname = ste.getClassName();
 		int lineNumber = ste.getLineNumber();
+//		System.out.println(ste);
 		units.addAll(lineNumberToUnit(methodName, classname, lineNumber));
 		return units;
 	}
@@ -127,12 +128,14 @@ public class Dispatcher {
 			for (Tag tag : tags) {
 				if (tag instanceof LineNumberTag) {
 					LineNumberTag lineNumberTag = (LineNumberTag) tag;
-					if (lineNumber == lineNumberTag.getLineNumber()
-							&&unitPlus.getMethodPlus().getclassName().equals(className)
+					if (lineNumber == lineNumberTag.getLineNumber()&&
+							unitPlus.getMethodPlus().getclassName().equals(className)
 							&&unitPlus.getMethodPlus().getMethodName().equals(methodName)
 							//to ensure that caller a and caller b is not reviewed twice
 							//to ensure that do not go into the useless method inside
-							&&!unitPlus.getAttribute().equals("b")) {
+							&&!unitPlus.getAttribute().equals("b")
+							) {
+						System.out.println(lineNumberTag.getLineNumber()+unitPlus.toString());
 						units.add(unitPlus);
 					}
 				}
@@ -159,7 +162,7 @@ public class Dispatcher {
 		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
 //		System.out.println("stackTraceElement: "+stackTraceElement);
 		// get all call sites of this method
-		Set<UnitPlus> preds = this.getPredecessors(this
+		List<UnitPlus> preds = this.getPredecessors(this
 				.getEntryUnitPlus(methodPlus));
 //		System.out.println("Entry: "+this .getEntryUnitPlus(methodPlus));
 		// check which call site fit the stack trace

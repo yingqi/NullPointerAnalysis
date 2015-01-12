@@ -46,12 +46,12 @@ import soot.util.Chain;
  */
 public class CreateAllCFG {
 
-	private Map<UnitPlus, Set<UnitPlus>> completeCFG;
-	private Map<UnitPlus, Set<Unit>> CFG;
+	private Map<UnitPlus, List<UnitPlus>> completeCFG;
+	private Map<UnitPlus, List<Unit>> CFG;
 	private List<UnitPlus> UnitDirectory;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
 	private Set<MethodPlus> Methods;
-	private Set<SootClass> sootclasses;
+	private List<SootClass> sootclasses;
 	private Map<Unit, UnitPlus> unitMapUnitPlus;
 	private List<UnitPlus> callerAs;
 	private List<UnitPlus> callerBs;
@@ -65,7 +65,7 @@ public class CreateAllCFG {
 	 * @param classNameString
 	 *            class name
 	 */
-	public CreateAllCFG(Set<SootClass> sootclasses, long time) {
+	public CreateAllCFG(List<SootClass> sootclasses, long time) {
 		callerAs = new ArrayList<>();
 		callerBs = new ArrayList<>();
 		unitMapUnitPlus = new HashMap<>();
@@ -83,7 +83,7 @@ public class CreateAllCFG {
 	 * 
 	 * @return
 	 */
-	public Map<UnitPlus, Set<UnitPlus>> createCFG() {
+	public Map<UnitPlus, List<UnitPlus>> createCFG() {
 		// in the class level
 		System.out.println("Method " + (System.currentTimeMillis() - time));
 		for (SootClass sootclass : sootclasses) {
@@ -94,6 +94,7 @@ public class CreateAllCFG {
 //				 System.out.println("Analyze method: "+sootclass.getName()+"."+sootMethod.getName());
 				if (sootMethod.isConcrete() && sootMethod.getSource() != null && !sootMethod.isJavaLibraryMethod()
 						&& !sootMethod.getName().equals("doMakeObject")
+						&&!(sootclass.getName().equals("org.apache.bcel.verifier.statics.Pass2Verifier$CPESSC_Visitor")&&sootMethod.getName().equals("visitCode"))
 						) {
 					try {
 						Body body = sootMethod.retrieveActiveBody();
@@ -144,10 +145,10 @@ public class CreateAllCFG {
 				index++;
 				UnitDirectory.add(NodeA);
 				UnitDirectory.add(NodeB);
-				Set<Unit> preds = new HashSet<>();
+				List<Unit> preds = new ArrayList<>();
 				preds.addAll(unitGraph.getPredsOf(unit));
 				CFG.put(NodeA, preds);
-				CFG.put(NodeB, new HashSet<Unit>());
+				CFG.put(NodeB, new ArrayList<Unit>());
 			} else
 			// if a unit is a definition statement and the right side is a caller
 			if (unit instanceof AbstractDefinitionStmt) {
@@ -162,10 +163,10 @@ public class CreateAllCFG {
 					index++;
 					UnitDirectory.add(NodeA);
 					UnitDirectory.add(NodeB);
-					Set<Unit> preds = new HashSet<>();
+					List<Unit> preds = new ArrayList<>();
 					preds.addAll(unitGraph.getPredsOf(unit));
 					CFG.put(NodeA, preds);
-					CFG.put(NodeB, new HashSet<Unit>());
+					CFG.put(NodeB, new ArrayList<Unit>());
 				} else
 				// if it is only a denifition statement
 				{
@@ -173,7 +174,7 @@ public class CreateAllCFG {
 					unitMapUnitPlus.put(unit, Node);
 					UnitDirectory.add(Node);
 					index++;
-					Set<Unit> preds = new HashSet<>();
+					List<Unit> preds = new ArrayList<>();
 					preds.addAll(unitGraph.getPredsOf(unit));
 					CFG.put(Node, preds);
 					if (unit.equals(unitGraph.getHead())) {
@@ -190,7 +191,7 @@ public class CreateAllCFG {
 				UnitDirectory.add(Node);
 				unitMapUnitPlus.put(unit, Node);
 				index++;
-				Set<Unit> preds = new HashSet<>();
+				List<Unit> preds = new ArrayList<>();
 				preds.addAll(unitGraph.getPredsOf(unit));
 				CFG.put(Node, preds);
 				if (unit.equals(unitGraph.getHead())) {
@@ -208,8 +209,8 @@ public class CreateAllCFG {
 	private void createCompleteCFG() {
 		Set<UnitPlus> keys = CFG.keySet();
 		for (UnitPlus key : keys) {
-			Set<UnitPlus> unitPlusPreds = new HashSet<>();
-			Set<Unit> unitPreds = CFG.get(key);
+			List<UnitPlus> unitPlusPreds = new ArrayList<>();
+			List<Unit> unitPreds = CFG.get(key);
 			// units for keys
 			for (Unit unitPred : unitPreds) {
 				unitPlusPreds.add(unitMapUnitPlus.get(unitPred));
@@ -381,7 +382,7 @@ public class CreateAllCFG {
 		for (int i = 0; i < callerAs.size(); i++) {
 			Set<MethodPlus> calledMethodPlus = getMethodPlus(callerAs.get(i));
 			if (calledMethodPlus.size() == 0) {
-				Set<UnitPlus> preds = completeCFG.get(callerBs.get(i));
+				List<UnitPlus> preds = completeCFG.get(callerBs.get(i));
 				preds.add(callerAs.get(i));
 			} else {
 				callerBs.get(i).setCall(true);

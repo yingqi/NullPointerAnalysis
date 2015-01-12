@@ -14,6 +14,11 @@ import dispatcher.LightDispatcher;
  */
 public class Record {
 
+	private MethodPlus methodPlus;
+	private Set<State> incomingStates;
+	private Set<State> outgoingStates;
+
+	
 	/**
 	 * constructor
 	 * 
@@ -83,10 +88,6 @@ public class Record {
 		}
 		return statesEquals;
 	}
-
-	private MethodPlus methodPlus;
-	private Set<State> incomingStates;
-	private Set<State> outgoingStates;
 
 	public Set<State> getOutgoingStates() {
 		return outgoingStates;

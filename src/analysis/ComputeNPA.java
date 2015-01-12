@@ -10,6 +10,8 @@ import internal.VisitRecord;
 import java.io.FileNotFoundException;
 import java.util.*;
 
+import javax.xml.stream.events.EndDocument;
+
 import soot.Value;
 import soot.jimple.ArrayRef;
 import soot.jimple.InstanceInvokeExpr;
@@ -38,7 +40,8 @@ public class ComputeNPA {
 	private Stack<MethodPlus> CS;
 	private Dispatcher dispatcher;
 	private Summary summary;
-	private Set<VisitRecord> visitRecords;
+//	private Set<VisitRecord> visitRecords;
+	private Map<UnitPlus, Set<State>> visits;
 	private int indexOfStackTrace;
 	private StackTraceElement[] stackTrace;
 	
@@ -55,7 +58,8 @@ public class ComputeNPA {
 		this.dispatcher = dispatcher;
 		CS = new Stack<>();
 		summary = new Summary();
-		visitRecords = new HashSet<>();
+//		visitRecords = new HashSet<>();
+		visits = new HashMap<UnitPlus, Set<State>>();
 		indexOfStackTrace = 0;
 		this.stackTrace = stackTrace;
 	}
@@ -65,7 +69,8 @@ public class ComputeNPA {
 	 */
 	 public void resetIndexOfStarckTrace() {
 	 indexOfStackTrace = 0;
-	 visitRecords.clear();
+//	 visitRecords.clear();
+	 visits.clear();
 	 }
 
 	/**
@@ -82,18 +87,19 @@ public class ComputeNPA {
 		Queue<Element> worklist = new LinkedList<>();
 		if (initializeElement.getStates().size() != 0) {
 			worklist.offer(initializeElement);
+			visits.put(initializeElement.getUnitPlus(), initializeElement.getStates());
 ////			worklist.push(initializeElement);
 //			visitRecords.add(new VisitRecord(initializeElement.getUnitPlus().getNumber(), initializeElement.getUnitPlus().getAttribute(), initializeElement.getStates()));
 		}
 		Set<State> tempStates = initializeElement.getStates();
 		boolean isFirstTimeVisitedEntryInUpperClass = true;
 		while (!worklist.isEmpty()) {
-			
 //			Element presentElement = worklist.pop();
 			Element presentElement = worklist.poll();
-			visitRecords.add(new VisitRecord(presentElement.getUnitPlus().getNumber(), presentElement.getUnitPlus().getAttribute(), presentElement.getStates()));
+//			visitRecords.add(new VisitRecord(presentElement.getUnitPlus().getNumber(), presentElement.getUnitPlus().getAttribute(), presentElement.getStates()));
 //			System.out.println("Present: "+presentElement);
-			Set<UnitPlus> preds = dispatcher.getPredecessors(presentElement.getUnitPlus());
+			List<UnitPlus> preds = dispatcher.getPredecessors(presentElement.getUnitPlus());
+//			tempStates = presentElement.getStates();
 			for (UnitPlus upPred : preds) {
 				boolean isElementVisited = false;
 //				for (VisitRecord visitRecord : visitRecords) {
@@ -108,11 +114,11 @@ public class ComputeNPA {
 //					if(upPred.toString().contains("r2 := @parameter1: freemarker.template.ObjectWrapper")
 //							&&upPred.getMethodPlus().getclassName().contains("freemarker.ext.beans.CollectionModel$1")
 //							&&upPred.getMethodPlus().getMethodName().contains("create")){
-//						System.out.println("PredElement States: "+predElement.getStates().size()+"\t"+predElement.getStates());
+//						System.out.println("PredElement: "+predElement);
 //					}
 					if (LightDispatcher.isTransform(upPred)) {
 						predElement.transform(NPA, PossibleNPAs);
-						worklistPush(predElement, worklist, visitRecords);
+						worklistPush(predElement, worklist, visits);
 					} else if (upPred.isCall()) {
 //						if(dispatcher.getPredecessors(upPred).size()>1){
 //							System.out.println("Multiple callers: "+upPred);
@@ -125,6 +131,10 @@ public class ComputeNPA {
 							transferReturnState(predElement, upPredPred.getMethodPlus());
 							Set<State> outgoingStates = summary.getInformation(predElement.getStates(),
 									upPredPred.getMethodPlus());
+//							if(upPredPred.getMethodPlus().getMethodName().equals("setFirstChild")){
+//								System.out.println(upPredPred);
+//								System.out.println(outgoingStates);
+//							}
 							if (outgoingStates == null) {
 								MethodPlus calledMethodPlust = null;
 								calledMethodPlust = upPredPred.getMethodPlus();
@@ -153,12 +163,14 @@ public class ComputeNPA {
 //							worklistPush(originalElement, predElement, worklist, visitRecords, false);
 							if(isFirstTimeGoDeeper){
 								predElement.setStates(outgoingStates);
+								isFirstTimeGoDeeper = false;
 							}else {
-								addAll(predElement.getStates(), outgoingStates);
+								LightDispatcher.addAll(predElement.getStates(), outgoingStates);
 							}
 						}
+//						System.out.println("Call End: "+predElement.getStates());
 						predElement.setUnitPlus(dispatcher.getCallSitePred(upPred));
-						worklistPush(predElement, worklist, visitRecords);
+						worklistPush(predElement, worklist, visits);
 					}
 					// if upPred is a normal statement push it and go on
 					else if (!LightDispatcher.isEntry(upPred)) {
@@ -189,15 +201,18 @@ public class ComputeNPA {
 						for (State addState : addStates) {
 							predElement.getStates().add(addState);
 						}
-						worklistPush(predElement, worklist, visitRecords);
+						worklistPush(predElement, worklist, visits);
 					}
 					else if (LightDispatcher.isEntry(upPred)) {
+//						System.out.println(isFirstTimeVisitedEntryInUpperClass);
+//						System.out.println(tempStates);
 						if (isFirstTimeVisitedEntryInUpperClass) {
 							tempStates = LightDispatcher.copyStates(predElement.getStates());
 							isFirstTimeVisitedEntryInUpperClass = false;
 						} else {
-							addAll(tempStates, predElement.getStates());
+							LightDispatcher.addAll(tempStates, predElement.getStates());
 						}
+//						System.out.println("Entry: "+predElement.getUnitPlus().getMethodPlus()+"\t"+tempStates);
 					}else {
 						System.out.println("Error: "+predElement);
 					}
@@ -220,30 +235,17 @@ public class ComputeNPA {
 						.getMethodPlus(), callSite);
 				System.out.println("After Map: "+outgoingStates);
 				Element callSiteElement = new Element(callSite, outgoingStates);
-				if(callSite.getMethodPlus().toString().startsWith("junit.")){
-					System.out.println("PossibleNPA States:  " + tempStates);
-				}else {
+//				if(indexOfStackTrace ==3){
+//					System.out.println("PossibleNPA States:  " + tempStates);
+//				}else {
 					analyzeMethod(callSiteElement);
-				}
+//				}
 			} else {
 				System.out.println("PossibleNPA States:  " + tempStates);
 			}
 		}
+//		System.out.println("Return: "+tempStates);
 		return tempStates;
-	}
-
-	private void addAll(Set<State> statesToBeAdded, Set<State> statesToAdd) {
-		for (State state : statesToAdd) {
-			boolean contains = false;
-			for (State state2 : statesToBeAdded) {
-				if (state.equalTo(state2)) {
-					contains = true;
-				}
-			}
-			if (!contains) {
-				statesToBeAdded.add(state);
-			}
-		}
 	}
 
 	private void transferReturnState(Element element, MethodPlus calledMethodPlus) {
@@ -408,15 +410,25 @@ public class ComputeNPA {
 //	}
 
 	private void worklistPush(Element predElement, Queue<Element> worklist,
-			Set<VisitRecord> visitRecords) {
+			Map<UnitPlus, Set<State>> visits) {
+		Set<State> removeStates = new HashSet<>();
 		if (predElement.getStates().size() > 0) {
 			// to check whether the element has been analyzed
 			boolean isElementAnalyzed = false;
-			for (VisitRecord visitRecord : visitRecords) {
-				if (visitRecord.elementVisited(predElement)) {
-					isElementAnalyzed = true;
-					break;
+			if(LightDispatcher.unitPlusSetContains(visits.keySet(), predElement.getUnitPlus())){
+				Set<State> visitStates = visits.get(predElement.getUnitPlus());
+				for(State state:predElement.getStates()){
+					if(LightDispatcher.stateSetContains(visitStates, state)){
+						removeStates.add(state);
+					}
 				}
+				if(predElement.getStates().size()==removeStates.size()){
+					isElementAnalyzed = true;
+				}else {
+					LightDispatcher.addAll(visits.get(predElement.getUnitPlus()), predElement.getStates());
+				}
+			}else {
+				visits.put(predElement.getUnitPlus(), predElement.getStates());
 			}
 			// to check whether the element is already in worklist
 			boolean isElementInWorklist = false;
@@ -432,49 +444,27 @@ public class ComputeNPA {
 				for (Element wlElement : worklist) {
 					if (wlElement.getUnitPlus().equalTo(predElement.getUnitPlus())) {
 						isUnitPlusInWorkList = true;
-						addAll(wlElement.getStates(), predElement.getStates());
+						LightDispatcher.addAll(wlElement.getStates(), predElement.getStates());
 						break;
 					}
 				}
 				if(!isUnitPlusInWorkList){
+//					boolean isRemove = false;
+//					for (State state : removeStates) {
+//						isRemove =true;
+//						predElement.getStates().remove(state);
+//					}
+//					if(isRemove){
+//						System.out.println(visits.get(predElement.getUnitPlus()));
+//						System.out.println(worklist);
+//						System.out.println(predElement);
+//					}
 					worklist.offer(predElement);
 				}
 			}
 		}
 	}
 	
-	
-//	private void worklistPush(Element predElement, Stack<Element> worklist,
-//			Set<VisitRecord> visitRecords) {
-//		if (predElement.getStates().size() > 0) {
-//			// since original element is checked in the analyzeMethod,
-//			// so there is no need to check it again
-//			boolean isElementAnalyzed = false;
-//			// to check whether the element is already in worklist
-//			boolean isElementInWorklist = false;
-//			for (Element wlElement : worklist) {
-//				if (wlElement.equalTo(predElement)) {
-//					isElementAnalyzed = true;
-//					break;
-//				}
-//			}
-//			if ((!isElementAnalyzed) && (!isElementInWorklist)) {
-//				//to check whether the unitplus is in the worklist
-//				boolean isUnitPlusInWorkList = false;
-//				for (Element wlElement : worklist) {
-//					if (wlElement.getUnitPlus().equalTo(predElement.getUnitPlus())) {
-//						isUnitPlusInWorkList = true;
-//						addAll(wlElement.getStates(), predElement.getStates());
-//						break;
-//					}
-//				}
-//				if(!isUnitPlusInWorkList){
-//					worklist.push(predElement);
-//				}
-//			}
-//		}
-//	}
-
 	public Set<UnitPlus> getPossibleNPAs() {
 		return PossibleNPAs;
 	}

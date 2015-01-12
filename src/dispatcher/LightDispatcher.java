@@ -252,5 +252,40 @@ public class LightDispatcher {
 		return isEntry;
 	}
 
+	public static boolean unitPlusSetContains(Set<UnitPlus> units, UnitPlus pred){
+		boolean setContains = false;
+		for(UnitPlus unitPlus:units){
+			if(unitPlus.equalTo(pred)){
+				setContains = true;
+				break;
+			}
+		}
+		return setContains;
+	}
 	
+	public static boolean stateSetContains(Set<State> states, State predState){
+		boolean setContains = false;
+		for(State state:states){
+			if(state.equalTo(predState)){
+				setContains = true;
+				break;
+			}
+		}
+		return setContains;
+	}
+	
+	
+	public static void addAll(Set<State> statesToBeAdded, Set<State> statesToAdd) {
+		for (State state : statesToAdd) {
+			boolean contains = false;
+			for (State state2 : statesToBeAdded) {
+				if (state.equalTo(state2)) {
+					contains = true;
+				}
+			}
+			if (!contains) {
+				statesToBeAdded.add(state);
+			}
+		}
+	}
 }

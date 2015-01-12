@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -44,14 +45,14 @@ import soot.toolkits.graph.UnitGraphPlus;
 public class Analysis {
 	private String phaseOption1;
 	private String phaseOption2;
-	private Map<UnitPlus, Set<UnitPlus>> completeCFG;
+	private Map<UnitPlus, List<UnitPlus>> completeCFG;
 	private Map<MethodPlus, UnitGraphPlus> methodToUnitGraph;
 	private Dispatcher dispatcher;
 
 	public Analysis(StackTraceElement[] stackTrace, String sootClassPath, int filetype, long time) {
 		// use location to find soot class
 		// actually we can only have one sootpath
-		Set<SootClass> sootClasses = new HashSet<SootClass>();
+		List<SootClass> sootClasses = new ArrayList<SootClass>();
 		phaseOption1 = "jpt";
 		phaseOption2 = "use-original-names:true";
 		Options.v().set_allow_phantom_refs(true);
@@ -71,11 +72,14 @@ public class Analysis {
 				classNames.add(ste.getClassName());
 			}
 		}
+		// To eliminate the difference between different runs.
+		Collections.sort(classNames);
 		for (String classNameString : classNames) {
 			SootClass sootclass = Scene.v().loadClassAndSupport(classNameString);
 			sootClasses.add(sootclass);
 			Scene.v().addBasicClass(classNameString, sootclass.SIGNATURES);
 		}
+//		Collections.sort(sootClasses);
 		// Be careful if we have to load necessary classes.
 		Scene.v().loadNecessaryClasses();
 
@@ -239,7 +243,7 @@ public class Analysis {
 				String methodString = String.format("%-30s", node.getMethodPlus().toString());
 				System.out.println("unit" + '\t' + node.getNumber() + '\t' + methodString + node.getUnit().toString());
 				// show the preds
-				Set<UnitPlus> preds = completeCFG.get(node);
+				List<UnitPlus> preds = completeCFG.get(node);
 				for (UnitPlus pred : preds) {
 					String methodPredString = String.format("%-30s", pred.getMethodPlus().toString());
 					System.out.println("pred" + '\t' + pred.getNumber() + pred.getAttribute() + '\t' + methodPredString
@@ -255,7 +259,7 @@ public class Analysis {
 						+ node.getUnit().toString());
 
 				// show the preds
-				Set<UnitPlus> preds = completeCFG.get(node);
+				List<UnitPlus> preds = completeCFG.get(node);
 				for (UnitPlus pred : preds) {
 					String methodPredString = String.format("%-30s", pred.getMethodPlus().toString());
 					System.out.println("pred" + '\t' + pred.getNumber() + pred.getAttribute() + '\t' + methodPredString
@@ -280,7 +284,7 @@ public class Analysis {
 					System.out.println("unit" + '\t' + node.getNumber() + '\t' + methodString
 							+ node.getUnit().toString());
 					// show the preds
-					Set<UnitPlus> preds = completeCFG.get(node);
+					List<UnitPlus> preds = completeCFG.get(node);
 					for (UnitPlus pred : preds) {
 						String methodPredString = String.format("%-30s", pred.getMethodPlus().toString());
 						System.out.println("pred" + '\t' + pred.getNumber() + pred.getAttribute() + '\t'
@@ -296,7 +300,7 @@ public class Analysis {
 							+ node.getUnit().toString());
 
 					// show the preds
-					Set<UnitPlus> preds = completeCFG.get(node);
+					List<UnitPlus> preds = completeCFG.get(node);
 					for (UnitPlus pred : preds) {
 						String methodPredString = String.format("%-30s", pred.getMethodPlus().toString());
 						System.out.println("pred" + '\t' + pred.getNumber() + pred.getAttribute() + '\t'
@@ -322,7 +326,7 @@ public class Analysis {
 	 * 
 	 * @return
 	 */
-	public Map<UnitPlus, Set<UnitPlus>> getCFG() {
+	public Map<UnitPlus, List<UnitPlus>> getCFG() {
 		return completeCFG;
 	}
 
