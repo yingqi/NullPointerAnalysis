@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -21,9 +22,14 @@ import dispatcher.Dispatcher;
 import dispatcher.Dispatcher;
 import dispatcher.LightDispatcher;
 import analysis.ComputeNPA;
+import soot.EntryPoints;
 import soot.Immediate;
+import soot.Local;
+import soot.PointsToAnalysis;
 import soot.Scene;
 import soot.SootClass;
+import soot.SootField;
+import soot.SootMethod;
 import soot.Value;
 import soot.ValueBox;
 import soot.jimple.Expr;
@@ -31,7 +37,14 @@ import soot.jimple.InstanceFieldRef;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.Ref;
 import soot.jimple.internal.AbstractDefinitionStmt;
+import soot.jimple.internal.JimpleLocal;
+import soot.jimple.spark.SparkTransformer;
+import soot.jimple.spark.geom.geomPA.GeomPointsTo;
+import soot.jimple.spark.internal.SparkNativeHelper;
+import soot.jimple.toolkits.callgraph.CHATransformer;
+import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.options.Options;
+import soot.options.SparkOptions;
 import soot.tagkit.LineNumberTag;
 import soot.tagkit.Tag;
 import soot.toolkits.graph.UnitGraphPlus;
@@ -61,12 +74,11 @@ public class Analysis {
 		Options.v().set_keep_line_number(true);
 		Options.v().set_soot_classpath(sootClassPath);
 		Options.v().setPhaseOption(phaseOption1, phaseOption2);
+		Options.v().setPhaseOption("cg","verbose:true");
 
 		ArrayList<String> classNames = new ArrayList<>();
 		if (filetype == 1) {
 			classNames = openClassFiles(sootClassPath, sootClassPath);
-		} else if (filetype == 0) {
-			// analyze the jar file
 		} else if (filetype == 2) {
 			for (StackTraceElement ste : stackTrace) {
 				classNames.add(ste.getClassName());
@@ -77,16 +89,50 @@ public class Analysis {
 		for (String classNameString : classNames) {
 			SootClass sootclass = Scene.v().loadClassAndSupport(classNameString);
 			sootClasses.add(sootclass);
-			Scene.v().addBasicClass(classNameString, sootclass.SIGNATURES);
 		}
-//		Collections.sort(sootClasses);
 		// Be careful if we have to load necessary classes.
 		Scene.v().loadNecessaryClasses();
-
+		Scene.v().setEntryPoints(EntryPoints.v().all());
+		
 		CreateAllCFG completeCFG = new CreateAllCFG(sootClasses, time);
 		this.completeCFG = completeCFG.createCFG();
-		// System.out.println("CFG created!");
 		this.methodToUnitGraph = completeCFG.getMethodToUnitGraph();
+
+		HashMap<String, String> opt = new HashMap<>();
+		opt.put("enabled","true");
+		opt.put("verbose","true");
+		opt.put("ignore-types","false");          
+		opt.put("force-gc","false");            
+		opt.put("pre-jimplify","false");          
+		opt.put("vta","false");                   
+		opt.put("rta","false");                   
+		opt.put("field-based","false");           
+		opt.put("types-for-sites","false");        
+		opt.put("merge-stringbuffer","true");   
+		opt.put("string-constants","false");     
+		opt.put("simulate-natives","true");      
+		opt.put("simple-edges-bidirectional","false");
+		opt.put("on-fly-cg","true");            
+		opt.put("simplify-offline","false");    
+		opt.put("simplify-sccs","false");        
+		opt.put("ignore-types-for-sccs","false");
+		opt.put("propagator","worklist");
+		opt.put("set-impl","double");
+		opt.put("double-set-old","hybrid");         
+		opt.put("double-set-new","hybrid");
+		opt.put("dump-html","false");           
+		opt.put("dump-pag","false");             
+		opt.put("dump-solution","false");        
+		opt.put("topo-sort","false");           
+		opt.put("dump-types","true");             
+		opt.put("class-method-var","true");     
+		opt.put("dump-answer","false");          
+		opt.put("add-tags","false");             
+		opt.put("set-mass","false"); 
+		SparkTransformer.v().transform("", opt);
+
+		System.out.println(Scene.v().getPointsToAnalysis());
+		LightDispatcher.pta =Scene.v().getPointsToAnalysis();
 	}
 
 	/**
@@ -132,7 +178,6 @@ public class Analysis {
 		ComputeNPA computeNPA = new ComputeNPA(dispatcher, stackTrace);
 		Set<UnitPlus> errorUnits = dispatcher.StackTraceElementToUnit(stackTrace, 0);
 		System.out.println("Error Units Number: " + errorUnits.size());
-//		Set<State> errorStates = new HashSet<>();
 		for (UnitPlus errorUnit : errorUnits) {
 			Set<State> errorStates = new HashSet<>();
 			System.out.println("Error Unit: "+errorUnit);
@@ -145,6 +190,11 @@ public class Analysis {
 							|| (instanceInvokeExpr.getBase() instanceof Immediate)) {
 						isUnitError = true;
 						errorStates.add(new State(instanceInvokeExpr.getBase(), errorUnit.getMethodPlus()));
+						if (instanceInvokeExpr.getBase() instanceof Local) {
+							Local local = (Local) instanceInvokeExpr.getBase();
+						}else if (instanceInvokeExpr.getBase() instanceof SootField) {
+							SootField sootField = (SootField) instanceInvokeExpr.getBase();
+						}
 					} else {
 						System.out.println("Invalid Base! " + instanceInvokeExpr.getBase());
 					}
@@ -156,6 +206,11 @@ public class Analysis {
 							) {
 						isUnitError = true;
 						errorStates.add(new State(instanceFieldRef.getBase(), errorUnit.getMethodPlus()));
+						if (instanceFieldRef.getBase() instanceof Local) {
+							Local local = (Local) instanceFieldRef.getBase();
+						}else if (instanceFieldRef.getBase() instanceof SootField) {
+							SootField sootField = (SootField) instanceFieldRef.getBase();
+						}
 					} else {
 						System.out.println("Invalid Base! " + instanceFieldRef.getBase());
 					}
@@ -169,28 +224,6 @@ public class Analysis {
 				computeNPA.analyzeMethod(errorElement);
 			}
 		}
-//		Iterator<UnitPlus> errorUnitIterator = errorUnits.iterator();
-//		UnitPlus analyzeUnitPlus = errorUnitIterator.next();
-//		while (errorUnitIterator.hasNext()) {
-//			UnitPlus tempUnitPlus = errorUnitIterator.next();
-//			List<ValueBox> useBoxs = tempUnitPlus.getUnit().getUseBoxes();
-//			boolean isUnitError = false;
-//			for (ValueBox useBox : useBoxs) {
-//				if ((useBox.getValue() instanceof InstanceInvokeExpr)||(useBox.getValue() instanceof InstanceFieldRef)) {
-//				isUnitError = true;
-//				}
-//			}
-//			if(isUnitError){
-//				if (analyzeUnitPlus.getNumber() < tempUnitPlus.getNumber()) {
-//					analyzeUnitPlus = tempUnitPlus;
-//				}
-//			}
-//		}
-//		System.out.println(System.currentTimeMillis() - time);
-//		System.out.println("Error Unit : " + analyzeUnitPlus+"\nStates : "+errorStates);
-//		computeNPA.resetIndexOfStarckTrace();
-//		Element errorElement = new Element(analyzeUnitPlus, errorStates);
-//		computeNPA.analyzeMethod(errorElement);
 
 		Set<UnitPlus> NPA = computeNPA.getNPA();
 		// show NPA founded

@@ -26,36 +26,10 @@ public class StartAnalysis {
 	 */
 	public static void main(String[] args) throws FileNotFoundException, ClassNotFoundException {
 		long time = System.currentTimeMillis();
-		// 0 stands for jar type, 1 stands for class type, 2 stands for only classes on the stack trace
+		// 1 stands for class type, 2 stands for only classes on the stack trace
 		int fileType = 1;
-//		String fileString = "/home/leo/output.txt";
-//		String sourceString = "/home/leo/RunTimeException/NPAException/bin";
-		
-		//pass
-//		String fileString = "/home/leo/jfc/bug.txt";
-//		String sourceString = "/home/leo/jfc/jfreechart";
-		
-		//pass
-//		String fileString = "/home/leo/jfcp/bug.txt";
-//		String sourceString = "/home/leo/jfcp/jfreechart";
-		
-//		String fileString = "/home/leo/mckoi/bug.txt";
-//		String sourceString = "/home/leo/mckoi/mckoidb";
-		
-//		String fileString = "/home/leo/jr/bug.txt";
-//		String sourceString = "/home/leo/jr/jrc/src";
-		
-//		String fileString = "/home/leo/jth/bug.txt";
-//		String sourceString = "/home/leo/jth/jth";
-		
-//		String fileString = "/home/leo/fm/bug.txt";
-//		String sourceString = "/home/leo/fm/fm";
-		
-		String fileString = "/home/leo/jode/bug.txt";
-		String sourceString = "/home/leo/jode/jode";
-		
-//		String fileString = "/home/leo/cs/bug.txt";
-//		String sourceString = "/home/leo/cs/checkstyle";
+		String fileString = args[1];
+		String sourceString = args[2];
 
 		File file = new File(fileString);
 		Scanner fileScanner = new Scanner(file);
@@ -117,16 +91,11 @@ public class StartAnalysis {
 		StackTraceElement[] stackTrace = (StackTraceElement[]) stackTraceElements
 				.toArray(new StackTraceElement[stackTraceElements.size()]);
 		fileScanner.close();
-		System.out.println(new Date().getTime()-time);
+		System.out.println(new Date().getTime() - time);
 		Analysis analysis = new Analysis(stackTrace, sourceString, fileType, time);
-//		System.out.println(new Date().getTime()-time);
-		// create the CFG first and then do analysis
-//		String[] strings = {"antlr.BaseAST","getFirstChild"};
-//		analysis.showCFG(strings);
-//		analysis.showCFG();
-		System.out.println("CFG created! "+(new Date().getTime()-time));
+		System.out.println("CFG created! " + (new Date().getTime() - time));
 		analysis.doAnalysis(stackTrace, time);
-		System.out.println(new Date().getTime()-time);
+		System.out.println(new Date().getTime() - time);
 
 	}
 }

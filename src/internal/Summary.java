@@ -17,8 +17,6 @@ import dispatcher.LightDispatcher;
  */
 public class Summary {
 	
-//	private Map<MethodPlus, List<StateRecord>> informationMap;
-	
 	private List<Record> information;
 	/**
 	 * constructor

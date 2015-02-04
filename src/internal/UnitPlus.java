@@ -14,7 +14,6 @@ public class UnitPlus {
 	private String attributeString;
 	private Unit unit;
 	private MethodPlus Method;
-//	private State state;
 	private boolean isCall;
 	
 	/**

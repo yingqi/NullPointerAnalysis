@@ -5,6 +5,7 @@ import soot.Local;
 import soot.Value;
 import soot.jimple.ArrayRef;
 import soot.jimple.Expr;
+import soot.jimple.InstanceFieldRef;
 /**
  * This class is the state of a node
  */
@@ -15,68 +16,20 @@ import soot.jimple.Expr;
  */
 public class State {
 	private Value variable;
-	// private String attribute;
-//	private LightDispatcher lightDispatcher;
+	private Value baseValue;
 	private MethodPlus methodPlus;
 	private MethodPlus returnInMethodPlus;
-//	private Value baseValue;
-//	private Value arrayBaseValue;
-//	private Value arrayIndexValue;
-//	private SootClass baseSootClass;
-//	private SootField field;
 	private boolean isNormalValue;
 	private boolean isReturnValue;
 	private boolean isArrayBaseValue;
 	private boolean isArrayValue;
+	private boolean isBaseValue;
+	private boolean hasBaseValue;
 
 	public Value getVariable() {
 		return variable;
 	}
 
-	public MethodPlus getMethodPlus() {
-		return methodPlus;
-	}
-
-//	public Value getBaseValue() {
-//		return baseValue;
-//	}
-
-	public Value getArrayBaseValue() {
-		if (variable instanceof ArrayRef) {
-			ArrayRef arrayRef = (ArrayRef) variable;
-			return arrayRef.getBase();
-		}else {
-			return null;
-		}
-	}
-//
-//	public Value getArrayIndexValue() {
-//		return arrayIndexValue;
-//	}
-
-//	public SootClass getBaseSootClass() {
-//		return baseSootClass;
-//	}
-//
-//	public SootField getField() {
-//		return field;
-//	}
-
-	public boolean isNormalValue() {
-		return isNormalValue;
-	}
-
-	public boolean isReturnValue() {
-		return isReturnValue;
-	}
-
-	public boolean isArrayBaseValue() {
-		return isArrayBaseValue;
-	}
-
-	public boolean isArrayValue() {
-		return isArrayValue;
-	}
 
 	/**
 	 * constructor
@@ -88,44 +41,43 @@ public class State {
 		isArrayValue = state.isArrayValue();
 		isArrayBaseValue = state.isArrayBaseValue();
 		isReturnValue = state.isReturnValue();
+		isBaseValue = state.isBaseValue();
+		hasBaseValue = state.hasBaseValue();
 		variable = state.getVariable();
 		methodPlus = state.getmethod();
 		returnInMethodPlus = state.getReturnInMethodPlus();
-//		field = state.getField();
-//		baseSootClass = state.getBaseSootClass();
-//		baseValue = state.getBaseValue();
-//		arrayBaseValue = state.getArrayBaseValue();
-//		arrayIndexValue = state.getArrayIndexValue();
+		baseValue = state.baseValue;
 	}
+
 
 	public State(Value initValue, MethodPlus methodPlus) {
 		isNormalValue = true;
 		isArrayValue = false;
 		isArrayBaseValue = false;
 		isReturnValue = false;
+		isBaseValue = false;
+		hasBaseValue=false;
 		variable = initValue;
 		this.methodPlus = methodPlus;
-//		baseValue = null;
-//		field = null;
-//		baseSootClass = null;
-//		arrayBaseValue = null;
-//		arrayIndexValue = null;
-//		if (variable instanceof Ref) {
-//			Ref ref = (Ref) variable;
-//			if (ref instanceof InstanceFieldRef) {
-//				InstanceFieldRef instanceFieldRef = (InstanceFieldRef) ref;
-//				this.field = instanceFieldRef.getField();
-//				this.baseValue = instanceFieldRef.getBase();
-//				if (baseValue.getType() instanceof RefType) {
-//					RefType refType = (RefType) baseValue.getType();
-//					this.baseSootClass = refType.getSootClass();
-//				}
-//			} else if (ref instanceof ArrayRef) {
-//				ArrayRef arrayRef = (ArrayRef) ref;
-//				arrayBaseValue = arrayRef.getBase();
-//				arrayIndexValue = arrayRef.getIndex();
-//			}
+		baseValue = null;
+	}
+	
+	public State(Value initValue, MethodPlus methodPlus, State state) {
+		isNormalValue = state.isNormalValue();
+		isArrayValue = state.isArrayValue();
+		isArrayBaseValue = state.isArrayBaseValue();
+		isBaseValue = state.isBaseValue();
+		
+		variable = initValue;
+		this.methodPlus = methodPlus;
+//		if(state.isReturnValue()){
+//			isReturnValue = state.isReturnValue();
+//			returnInMethodPlus = state.getReturnInMethodPlus();
 //		}
+		if(state.hasBaseValue){
+			hasBaseValue=state.hasBaseValue();
+			baseValue = state.getBaseValue();
+		}
 	}
 
 	public MethodPlus getReturnInMethodPlus() {
@@ -154,7 +106,7 @@ public class State {
 	}
 
 	public boolean equalValue(Value value, MethodPlus methodPlus){
-		return LightDispatcher.equalTwoValues(variable, this.methodPlus, value, methodPlus);
+		return LightDispatcher.equalTwoValues(variable, value);
 	}
 	
 	/**
@@ -168,15 +120,19 @@ public class State {
 
 	@Override
 	public String toString() {
-		return methodPlus.toString() + "\tValue: " + variable.toString() + " ";
+		if(isNormalValue){
+			return  variable.toString() + " ";
+		}else {
+			return " ";
+		}
 	}
 
 	@Override
 	public boolean equals(Object object) {
 		return equalTo(object);
 	}
-
-	public boolean equalTo(Object object) {
+	
+	public boolean completeEqual(Object object) {
 		boolean equals = false;
 		if (!(object instanceof State)) {
 			equals = false;
@@ -194,6 +150,33 @@ public class State {
 		}
 		return equals;
 	}
+	
+	public void mergeState(State state){
+		isArrayBaseValue = state.isArrayBaseValue()||isArrayBaseValue;
+		isBaseValue = state.isArrayBaseValue()||isBaseValue;
+		isArrayValue = state.isArrayValue()||isArrayValue;
+		hasBaseValue = state.hasBaseValue()||hasBaseValue;
+		isNormalValue = state.isNormalValue()||isNormalValue;
+	}
+
+	public boolean equalTo(Object object) {
+		boolean equals = false;
+		if (!(object instanceof State)) {
+			equals = false;
+		} else {
+			State state = (State) object;
+			if (state.isReturnValue()||isReturnValue) {
+				if(state.isReturnValue()&&isReturnValue){
+					equals = returnInMethodPlus.equals(state.getReturnInMethodPlus());
+				}else {
+					equals =false;
+				}
+			} else {
+					equals = equalValue(state.getVariable(), state.getmethod());
+			}
+		}
+		return equals;
+	}
 
 	private boolean equalValueType(State state) {
 		return (isArrayBaseValue == state.isArrayBaseValue) && (isArrayValue == state.isArrayValue)
@@ -201,22 +184,83 @@ public class State {
 	}
 
 	public boolean allValueFalse() {
-		return !(isArrayBaseValue || isNormalValue || isReturnValue);
+		return !(isNormalValue || isReturnValue);
 	}
 
+	public Value getArrayBaseValue() {
+		if (variable instanceof ArrayRef) {
+			ArrayRef arrayRef = (ArrayRef) variable;
+			return arrayRef.getBase();
+		}else {
+			System.out.println("Error No array base");
+			return null;
+		}
+	}
+	
+	public Value getBaseValue() {
+		return baseValue;
+	}
+
+
+	public boolean isBaseValue() {
+		return isBaseValue;
+	}
+
+	public boolean isNormalValue() {
+		return isNormalValue;
+	}
+
+	public boolean isReturnValue() {
+		return isReturnValue;
+	}
+
+	public boolean isArrayBaseValue() {
+		return isArrayBaseValue;
+	}
+
+	public boolean isArrayValue() {
+		return isArrayValue;
+	}
+
+	public boolean hasBaseValue() {
+		return hasBaseValue;
+	}
+	
 	public void setReturnValue(MethodPlus methodPlus) {
 		isReturnValue = true;
 		this.returnInMethodPlus = methodPlus;
 	}
-
+	
 	public void desetReturnValue() {
 		isReturnValue = false;
 		this.returnInMethodPlus = null;
 		isNormalValue = true;
 	}
+	
+	public void setHasBaseState(Value baseValue) {
+		hasBaseValue = true;
+		this.baseValue = baseValue;
+	}
+	
+	public void setIsBaseState(){
+		isBaseValue = true;
+	}
+	
+	public void deSetIsBaseState(){
+		isBaseValue = false;
+	}
+	
+	public void deSetHasBaseState() {
+		hasBaseValue = false;
+		baseValue = null;
+	}
 
 	public void desetArrayBaseValue() {
 		isArrayBaseValue = false;
+	}
+	
+	public void desetArrayValue() {
+		isArrayValue = false;
 	}
 
 	public void desetNormalValue() {
@@ -231,20 +275,23 @@ public class State {
 		isArrayBaseValue = true;
 	}
 
+	public void updateFieldBase(Value base){
+		baseValue = base;
+	}
+	
 	public void updateArrayBase(Value base) {
-//		this.arrayBaseValue = base;
 		if (variable instanceof ArrayRef) {
 			ArrayRef arrayRef = (ArrayRef) variable;
 			if (base instanceof Local) {
 				Local local = (Local) base;
 				arrayRef.setBase(local);
+			}else {
+				System.out.println("Error in Update Array Base!\nBase is not local!");
 			}
 		}
 	}
 
-	public void setArrayValue(Value base, Value index) {
-//		this.arrayBaseValue = base;
-//		this.arrayIndexValue = index;
+	public void setArrayValue() {
 		isArrayValue = true;
 	}
 

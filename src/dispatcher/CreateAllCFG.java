@@ -91,7 +91,6 @@ public class CreateAllCFG {
 			sootclass.setApplicationClass();
 			// in the method level
 			for (SootMethod sootMethod : sootMethods) {
-//				 System.out.println("Analyze method: "+sootclass.getName()+"."+sootMethod.getName());
 				if (sootMethod.isConcrete() && sootMethod.getSource() != null && !sootMethod.isJavaLibraryMethod()
 						&& !sootMethod.getName().equals("doMakeObject")
 						&&!(sootclass.getName().equals("org.apache.bcel.verifier.statics.Pass2Verifier$CPESSC_Visitor")&&sootMethod.getName().equals("visitCode"))
@@ -133,14 +132,12 @@ public class CreateAllCFG {
 		int index = UnitDirectory.size();
 		while (unitIterator.hasNext()) {
 			Unit unit = unitIterator.next();
-			// System.out.println(unit);
 			// if a unit is caller
 			if (unit instanceof JInvokeStmt) {
 				UnitPlus NodeA = new UnitPlus(index, "a", unit, Method);
 				UnitPlus NodeB = new UnitPlus(index, "b", unit, Method);
 				callerAs.add(NodeA);
 				callerBs.add(NodeB);
-				// callerpairs.put(NodeA, NodeB);
 				unitMapUnitPlus.put(unit, NodeB);
 				index++;
 				UnitDirectory.add(NodeA);
@@ -246,17 +243,6 @@ public class CreateAllCFG {
 		Set<MethodPlus> calledMethodSet = new HashSet<>();
 		SootMethod sootMethod = invokeExpr.getMethod();
 		SootClass invokeSootClass = sootMethod.getDeclaringClass();
-//		if(invokeExpr instanceof InstanceInvokeExpr){
-//			InstanceInvokeExpr instanceInvokeExpr = (InstanceInvokeExpr) invokeExpr;
-//			if(instanceInvokeExpr.toString().contains("interfaceinvoke $r1.<internal.Int: int getInt()>()")){
-//				System.out.println(instanceInvokeExpr.getBase()+"\t"+instanceInvokeExpr.getBase().getType());
-//				Value base = instanceInvokeExpr.getBase();
-//				if(base instanceof JimpleLocal){
-//					JimpleLocal jimpleLocal = (JimpleLocal) base;
-//					System.out.println(jimpleLocal.getClass());
-//				}
-//			}
-//		}
 		if(!sootMethod.isJavaLibraryMethod()){
 			if(invokeSootClass.isInterface()){
 				for (MethodPlus methodPlusTemp : methodToUnitGraph.keySet()) {
@@ -292,16 +278,6 @@ public class CreateAllCFG {
 				}
 			}else if(invokeSootClass.isAbstract()){
 				boolean isMethodInAbstractClass = false;
-//				for (MethodPlus methodPlusTemp : methodToUnitGraph.keySet()) {
-//					if (methodPlusTemp.equalTo(sootMethod)) {
-//						SootClass methodSootClass = methodPlusTemp.getSootClass();
-//						if (methodSootClass.equals(invokeSootClass)
-//								&&sootMethod.getActiveBody().getUnits().size()!=0) {
-//							isMethodInAbstractClass = true;
-//							calledMethodSet.add(methodPlusTemp);
-//						}
-//					}
-//				}
 				if(!isMethodInAbstractClass){
 					for (MethodPlus methodPlusTemp : methodToUnitGraph.keySet()) {
 						if (methodPlusTemp.equalTo(sootMethod)) {

@@ -48,7 +48,6 @@ public class Dispatcher {
 		this.methodToUnitGraph = methodToUnitGraph;
 	}
 
-//	@Override
 	public List<UnitPlus> getPredecessors(UnitPlus unitPlus) {
 		List<UnitPlus> preds = null;
 		Set<UnitPlus> keys = completeCFG.keySet();
@@ -62,7 +61,6 @@ public class Dispatcher {
 		return preds;
 	}
 
-//	@Override
 	public UnitPlus getExitUnitPlus(MethodPlus Method) {
 		UnitPlus tailUnitPlus = null;
 		Unit tailUnit = methodToUnitGraph.get(Method).getTail();
@@ -74,7 +72,6 @@ public class Dispatcher {
 		return tailUnitPlus;
 	}
 
-//	@Override
 	public UnitPlus getEntryUnitPlus(MethodPlus Method) {
 		UnitPlus headUnitPlus = null;
 		Unit headUnit = methodToUnitGraph.get(Method).getHead();
@@ -86,20 +83,6 @@ public class Dispatcher {
 		return headUnitPlus;
 	}
 
-//	@Override
-//	public MethodPlus getMethod(UnitPlus unitPlus) {
-//		return unitPlus.getMethodPlus();
-//	}
-
-//	@Override
-	
-
-//	@Override
-//	public boolean isCall(UnitPlus unitPlus) {
-//		return unitPlus.isCall();
-//	}
-
-//	@Override
 	public Set<UnitPlus> StackTraceElementToUnit(
 			StackTraceElement[] stackTrace, int indexOfStackTrace) {
 		Set<UnitPlus> units = new HashSet<>();
@@ -107,7 +90,6 @@ public class Dispatcher {
 		String methodName = ste.getMethodName();
 		String classname = ste.getClassName();
 		int lineNumber = ste.getLineNumber();
-//		System.out.println(ste);
 		units.addAll(lineNumberToUnit(methodName, classname, lineNumber));
 		return units;
 	}
@@ -135,7 +117,6 @@ public class Dispatcher {
 							//to ensure that do not go into the useless method inside
 							&&!unitPlus.getAttribute().equals("b")
 							) {
-						System.out.println(lineNumberTag.getLineNumber()+unitPlus.toString());
 						units.add(unitPlus);
 					}
 				}
@@ -144,35 +125,25 @@ public class Dispatcher {
 		
 		return units;
 	}
-	
-//	@Override
 
-
-//	@Override
 	public Map<MethodPlus, UnitGraphPlus> getMethodToUnitGraphPlus() {
 		return methodToUnitGraph;
 	}
 
-
-//	@Override
 	public UnitPlus getStackTraceCallSiteOfMethod(MethodPlus methodPlus,
 			StackTraceElement[] stackTrace, int indexOfStackTrace)
 			throws ClassNotFoundException, FileNotFoundException {
 		UnitPlus callSite = null;
 		StackTraceElement stackTraceElement = stackTrace[indexOfStackTrace];
-//		System.out.println("stackTraceElement: "+stackTraceElement);
 		// get all call sites of this method
 		List<UnitPlus> preds = this.getPredecessors(this
 				.getEntryUnitPlus(methodPlus));
-//		System.out.println("Entry: "+this .getEntryUnitPlus(methodPlus));
 		// check which call site fit the stack trace
 		for (UnitPlus pred : preds) {
-//			System.out.println("Call Site Pred: "+pred);
 			List<Tag> tags =pred.getUnit().getTags();
 			for(Tag tag:tags){
 				if(tag instanceof LineNumberTag){
 					LineNumberTag lineNumberTag = (LineNumberTag) tag;
-//					System.out.println("LineNumber: "+lineNumberTag.getLineNumber());
 					if(stackTraceElement.getLineNumber()==lineNumberTag.getLineNumber()){
 						callSite = pred;
 					}
@@ -183,7 +154,6 @@ public class Dispatcher {
 
 	}
 
-//	@Override
 	public UnitPlus getCallSitePred(UnitPlus callB) {
 		UnitPlus callA =null;
 		Set<UnitPlus> keys = completeCFG.keySet();
@@ -195,9 +165,4 @@ public class Dispatcher {
 		return callA;
 	}
 
-//	@Overrcide
-
-
-//	@Overcride
-	
 }
